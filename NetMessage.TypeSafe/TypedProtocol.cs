@@ -47,7 +47,7 @@ namespace NetMessage.TypeSafe
       var offset = 0;
       while (offset < text.Length)
       {
-        var eotPos = text.IndexOf(Terminator, offset);
+        var eotPos = text.IndexOf(Terminator, offset, StringComparison.Ordinal);
 
         if (eotPos == -1)
         {
