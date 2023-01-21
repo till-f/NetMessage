@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.32126.317
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetMessage.Base", "NetMessage.Base\NetMessage.Base.csproj", "{9E360813-E8B9-4FE1-9315-6224C8A841A4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetMessage.Base", "NetMessage.Base\NetMessage.Base.csproj", "{9E360813-E8B9-4FE1-9315-6224C8A841A4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetMessage.TypeSafe", "NetMessage.TypeSafe\NetMessage.TypeSafe.csproj", "{82F3A2E9-A0F1-4B4F-A633-9194846B2F42}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetMessage.TypeSafe", "NetMessage.TypeSafe\NetMessage.TypeSafe.csproj", "{82F3A2E9-A0F1-4B4F-A633-9194846B2F42}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{53939F01-323F-40AC-896F-F50DD1BA9227}"
 EndProject
@@ -13,22 +13,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SimpleString", "SimpleStrin
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TypeSafe", "TypeSafe", "{0596C0DE-663B-4C01-BB6A-A43163FB2953}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetMessage.Examples.SimpleString", "Examples\SimpleString\NetMessage.Examples.SimpleString.csproj", "{A4817567-07A3-44F9-A259-2EFCB43201A8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetMessage.Examples.SimpleString", "Examples\SimpleString\NetMessage.Examples.SimpleString.csproj", "{A4817567-07A3-44F9-A259-2EFCB43201A8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetMessage.Examples.SimpleString.Client", "Examples\SimpleString.Client\NetMessage.Examples.SimpleString.Client.csproj", "{D52065DC-9507-48E9-ACB9-23C2F8A502D7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetMessage.Examples.SimpleString.Client", "Examples\SimpleString.Client\NetMessage.Examples.SimpleString.Client.csproj", "{D52065DC-9507-48E9-ACB9-23C2F8A502D7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetMessage.Examples.SimpleString.Server", "Examples\SimpleString.Server\NetMessage.Examples.SimpleString.Server.csproj", "{0B6F956D-6AED-48F4-A006-1BA30DE1E921}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetMessage.Examples.SimpleString.Server", "Examples\SimpleString.Server\NetMessage.Examples.SimpleString.Server.csproj", "{0B6F956D-6AED-48F4-A006-1BA30DE1E921}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetMessage.Examples.TypeSafe", "Examples\TypeSafe\NetMessage.Examples.TypeSafe.csproj", "{FECC4D95-D780-464E-8BC2-F48990015E05}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetMessage.Examples.TypeSafe", "Examples\TypeSafe\NetMessage.Examples.TypeSafe.csproj", "{FECC4D95-D780-464E-8BC2-F48990015E05}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetMessage.Examples.TypeSafe.Client", "Examples\TypeSafe.Client\NetMessage.Examples.TypeSafe.Client.csproj", "{D32429B9-514A-44CE-813A-B29DF51D4A4E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetMessage.Examples.TypeSafe.Client", "Examples\TypeSafe.Client\NetMessage.Examples.TypeSafe.Client.csproj", "{D32429B9-514A-44CE-813A-B29DF51D4A4E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetMessage.Examples.TypeSafe.Server", "Examples\TypeSafe.Server\NetMessage.Examples.TypeSafe.Server.csproj", "{70F67525-173C-4E06-AD2D-F7992CADEA46}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution", "Solution", "{F59F60C8-CD11-4911-AFE5-70D74C17BBC4}"
-	ProjectSection(SolutionItems) = preProject
-		Pipeline.yml = Pipeline.yml
-	EndProjectSection
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetMessage.Examples.TypeSafe.Server", "Examples\TypeSafe.Server\NetMessage.Examples.TypeSafe.Server.csproj", "{70F67525-173C-4E06-AD2D-F7992CADEA46}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
