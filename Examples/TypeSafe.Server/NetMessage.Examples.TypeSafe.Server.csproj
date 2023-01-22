@@ -2,20 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-    <RootNamespace>NetMessage.Examples.TypeSafe.Server</RootNamespace>
     <Nullable>enable</Nullable>
+    <RootNamespace>NetMessage.Examples.TypeSafe.Server</RootNamespace>
     <AssemblyName>NetMessage.Examples.TypeSafe.Server</AssemblyName>
-    <Authors>Till Fischer</Authors>
-    <Description>Typesafe, lightweight RPC/messaging for .NET</Description>
-    <Copyright>(c) 2023</Copyright>
-    <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
-    <PackageProjectUrl>https://github.com/till-f/NetMessage</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/till-f/NetMessage.git</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <PackageTags>RPC;Networking;Messaging</PackageTags>
-    <NeutralLanguage>en-US</NeutralLanguage>
-    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <OutputType>Exe</OutputType>
   </PropertyGroup>
 
