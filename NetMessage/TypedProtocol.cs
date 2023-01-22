@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace NetMessage.TypeSafe
+namespace NetMessage
 {
   /// <summary>
   /// This is a simple protocol to transer strings with an additional type information

@@ -21,7 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\NetMessage.Base\NetMessage.Base.csproj" />
-    <ProjectReference Include="..\..\NetMessage.TypeSafe\NetMessage.TypeSafe.csproj" />
+    <ProjectReference Include="..\..\NetMessage\NetMessage.csproj" />
     <ProjectReference Include="..\TypeSafe\NetMessage.Examples.TypeSafe.csproj" />
   </ItemGroup>
 

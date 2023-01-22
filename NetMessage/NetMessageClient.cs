@@ -2,7 +2,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace NetMessage.TypeSafe
+namespace NetMessage
 {
   public class NetMessageClient : ClientBase<NetMessageClient, TypedRequestInternal, TypedProtocol, TypedPayload>
   {

@@ -1,7 +1,7 @@
 ﻿using NetMessage.Base.Message;
 using System.Threading.Tasks;
 
-namespace NetMessage.TypeSafe
+namespace NetMessage
 {
   /// <summary>
   /// Holds the final deserialized request that was received on the <see cref="TypedProtocol"/>.

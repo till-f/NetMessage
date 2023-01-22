@@ -1,7 +1,7 @@
 ﻿using NetMessage.Base;
 using System.Threading.Tasks;
 
-namespace NetMessage.TypeSafe
+namespace NetMessage
 {
   public class NetMessageSession : SessionBase<NetMessageServer, NetMessageSession, TypedRequestInternal, TypedProtocol, TypedPayload>
   {

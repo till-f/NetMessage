@@ -1,7 +1,7 @@
 ﻿using NetMessage.Base;
 using System;
 
-namespace NetMessage.TypeSafe
+namespace NetMessage
 {
   public class NetMessageServer : ServerBase<NetMessageServer, NetMessageSession, TypedRequestInternal, TypedProtocol, TypedPayload>
   {

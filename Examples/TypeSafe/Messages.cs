@@ -1,5 +1,4 @@
-﻿using NetMessage.TypeSafe;
-using System;
+﻿using System;
 
 namespace NetMessage.Examples.TypeSafe
 {

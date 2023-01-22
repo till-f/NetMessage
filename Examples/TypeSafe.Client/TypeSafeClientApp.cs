@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Globalization;
 using NetMessage.Examples.TypeSafe;
-using NetMessage.TypeSafe;
 
 namespace NetMessage.Examples.SimpleString.Client
 {

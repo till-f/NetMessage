@@ -2,7 +2,7 @@
 using NetMessage.Base.Message;
 using System;
 
-namespace NetMessage.TypeSafe
+namespace NetMessage
 {
   public abstract class TypedReceiveHandler
   {

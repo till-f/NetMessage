@@ -3,7 +3,7 @@ using NetMessage.Base.Message;
 using System;
 using System.Collections.Generic;
 
-namespace NetMessage.TypeSafe
+namespace NetMessage
 {
   /// <summary>
   /// Internal helper that supports the registration of message handlers and request handlers in a client or a server.

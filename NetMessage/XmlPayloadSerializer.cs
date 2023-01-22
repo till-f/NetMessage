@@ -2,7 +2,7 @@
 using System.Xml;
 using System.Xml.Serialization;
 
-namespace NetMessage.TypeSafe
+namespace NetMessage
 {
   public class XmlPayloadSerializer : IPayloadSerializer
   {

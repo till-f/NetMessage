@@ -1,4 +1,4 @@
-﻿namespace NetMessage.TypeSafe
+﻿namespace NetMessage
 {
   /// <summary>
   /// The payload type for the <see cref="TypedProtocol"/>.
