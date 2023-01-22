@@ -6,13 +6,13 @@
     <Nullable>enable</Nullable>
     <AssemblyName>NetMessage.Examples.SimpleString</AssemblyName>
     <Authors>Till Fischer</Authors>
-    <Description>Lightweight messaging library for .NET</Description>
+    <Description>Typesafe, lightweight RPC/messaging for .NET</Description>
     <Copyright>(c) 2023</Copyright>
     <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
     <PackageProjectUrl>https://github.com/till-f/NetMessage</PackageProjectUrl>
     <RepositoryUrl>https://github.com/till-f/NetMessage.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>rpc;networking;messaging</PackageTags>
+    <PackageTags>RPC;Networking;Messaging</PackageTags>
     <NeutralLanguage>en-US</NeutralLanguage>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
