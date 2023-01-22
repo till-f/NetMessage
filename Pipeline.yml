@@ -1,3 +1,5 @@
+name: $(Date:yy)$(DayOfYear)-r$(Rev:rr)
+
 trigger:
 - main
 - topics/*
@@ -6,6 +8,7 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
+  solution: '**/*.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
@@ -15,9 +18,31 @@ steps:
 - task: NuGetCommand@2
   inputs:
     restoreSolution: '$(solution)'
+  enabled: false
 
 - task: VSBuild@1
   inputs:
-    solution: '**/*.sln'
+    solution: '$(solution)'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
+    msbuildArgs: '/p:VersionSuffix=$(Build.BuildNumber)'
+
+- task: VSTest@2
+  inputs:
+    testAssemblyVer2: |-
+      **\*Test.dll
+      !**\obj\**
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+  enabled: false
+
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: '$(Build.SourcesDirectory)'
+    Contents: 'NetMessage*\bin\Release\*.nupkg'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+- task: PublishPipelineArtifact@1
+  inputs:
+    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: 'NetMessage-$(Build.BuildNumber)'
