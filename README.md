@@ -25,10 +25,9 @@ public class WeatherResponse
 }
 ```
 
-*Note that the message classes are (de)serialized by the selected `IPayloadSerializer`. By default, the `XmlSerializer` from
-.NET is used. Furthermore, a special string is used to terminate every message. The default terminator is "\u0004", i.e., the
-EOT (End Of Transmission) character, but it can be changed to anything else. Note that the terminator must not be contained in
-the payload (e.g. in a string property).*
+*Instances of these classes are (de)serialized by the selected `IPayloadSerializer`. By default, the `XmlSerializer` from
+.NET is used. The payload serializer also defines the sequence terminating the message. The default terminator is "\u0004",
+i.e., the EOT (End Of Transmission) character.*
 
 ### 3. Initialize and start server
 Create the server instance with the port number for listening and add handlers for events, messages and requests.
