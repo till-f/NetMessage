@@ -40,12 +40,12 @@ namespace NetMessage.Base
 
     protected override void HandleMessage(Message<TPld> message)
     {
-      Server!.NotifyMessagesRecieved((TSession)this, message);
+      Server!.NotifyMessagesReceived((TSession)this, message);
     }
 
     protected override void HandleRequest(TRequest request)
     {
-      Server!.NotifyRequestRecieved((TSession)this, request);
+      Server!.NotifyRequestReceived((TSession)this, request);
     }
 
     protected override void NotifyClosed()

@@ -123,12 +123,12 @@ namespace NetMessage.Base
       SessionClosed?.Invoke(session);
     }
 
-    internal void NotifyMessagesRecieved(TSession session, Message<TPld> message)
+    internal void NotifyMessagesReceived(TSession session, Message<TPld> message)
     {
       MessageReceived?.Invoke(session, message);
     }
 
-    internal void NotifyRequestRecieved(TSession session, TRequest request)
+    internal void NotifyRequestReceived(TSession session, TRequest request)
     {
       RequestReceived?.Invoke(session, request);
     }

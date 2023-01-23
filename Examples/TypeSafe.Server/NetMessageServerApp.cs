@@ -3,7 +3,7 @@ using System.Globalization;
 
 namespace NetMessage.Examples.TypeSafe.Server
 {
-  public class TypeSafeServerApp
+  public class NetMessageServerApp
   {
     public const ushort Port = 2012;
 

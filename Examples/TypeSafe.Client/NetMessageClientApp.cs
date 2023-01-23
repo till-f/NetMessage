@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Globalization;
-using NetMessage.Examples.TypeSafe;
 
-namespace NetMessage.Examples.SimpleString.Client
+namespace NetMessage.Examples.TypeSafe.Client
 {
-  class TypeSafeClientApp
+  class NetMessageClientApp
   {
     public const ushort Port = 2012;
 
