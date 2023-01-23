@@ -23,10 +23,6 @@ namespace NetMessage
       RequestReceived += _receiver.NotifyRequestReceived;
     }
 
-    public Encoding Encoding { get; set; } = Encoding.UTF8;
-
-    public string Terminator { get; set; } = TypedProtocol.DefaultTerminator;
-
     public void AddMessageHandler<TTPld>(Action<NetMessageClient, TTPld> messageHandler)
     {
       _receiver.AddMessageHandler(messageHandler);
@@ -78,8 +74,8 @@ namespace NetMessage
     {
       return new TypedProtocol
       {
-        Encoding = Encoding,
-        Terminator = Terminator
+        Encoding = _payloadConverter.ProtocolEncoding,
+        Terminator = _payloadConverter.ProtocolTerminator
       };
     }
   }

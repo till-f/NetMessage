@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.IO;
 
 namespace NetMessage.Examples.TypeSafe.Server
 {
@@ -8,6 +9,8 @@ namespace NetMessage.Examples.TypeSafe.Server
     public const ushort Port = 2012;
 
     private static NetMessageSession? _openSession;
+
+    public static StreamWriter _writer = File.AppendText("messages.log");
 
     static void Main()
     {
@@ -29,7 +32,8 @@ namespace NetMessage.Examples.TypeSafe.Server
               Console.WriteLine("Client not connected.");
               break;
             }
-            _openSession.SendMessageAsync("Blah, blah, blah...");
+            // note that will not be displayed correctly in the console if your system locale is something like English
+            _openSession.SendMessageAsync("Hello in Chinese: 你好");
             break;
           case 'r':
             if (_openSession == null)
@@ -82,6 +86,8 @@ namespace NetMessage.Examples.TypeSafe.Server
     private static void StringMessageHandler(NetMessageSession sesion, string stringMessage)
     {
       Console.WriteLine($"RECEIVED STRING MESSAGE: {stringMessage}");
+      _writer.WriteLine($"RECEIVED STRING MESSAGE: {stringMessage}");
+      _writer.Flush();
     }
 
     private static void WeatherRequestHandler(NetMessageSession session, TypedRequest<WeatherRequest, WeatherResponse> weatherRequest)

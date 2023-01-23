@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Globalization;
+using System.IO;
 
 namespace NetMessage.Examples.TypeSafe.Client
 {
   class NetMessageClientApp
   {
     public const ushort Port = 2012;
+
+    public static StreamWriter _writer = File.AppendText("messages.log");
 
     static void Main()
     {
@@ -36,7 +39,8 @@ namespace NetMessage.Examples.TypeSafe.Client
               Console.WriteLine("Cannot send, not connected.");
               break;
             }
-            client.SendMessageAsync("Hello World!");
+            // note that will not be displayed correctly in the console if your system locale is something like English
+            client.SendMessageAsync("Hello in Japanese: こんにちは");
             break;
           case 'r':
             if (!client.IsConnected)
@@ -91,6 +95,8 @@ namespace NetMessage.Examples.TypeSafe.Client
     private static void StringMessageHandler(NetMessageClient arg1, string stringMessage)
     {
       Console.WriteLine($"RECEIVED STRING MESSAGE: {stringMessage}");
+      _writer.WriteLine($"RECEIVED STRING MESSAGE: {stringMessage}");
+      _writer.Flush();
     }
 
     private static void CalculationRequestHandler(NetMessageClient client, TypedRequest<CalculationRequest, CalculationResponse> calculationRequest)
