@@ -1,5 +1,6 @@
 ﻿using NetMessage.Base;
 using System;
+using System.Text;
 
 namespace NetMessage
 {
@@ -20,6 +21,10 @@ namespace NetMessage
       MessageReceived += _receiver.NotifyMessageReceived;
       RequestReceived += _receiver.NotifyRequestReceived;
     }
+
+    public Encoding Encoding { get; set; } = Encoding.UTF8;
+
+    public string Terminator { get; set; } = TypedProtocol.DefaultTerminator;
 
     public void AddMessageHandler<TTPld>(Action<NetMessageSession, TTPld> messageHandler)
     {
@@ -45,7 +50,11 @@ namespace NetMessage
 
     protected override TypedProtocol CreateProtocolBuffer()
     {
-      return new TypedProtocol();
+      return new TypedProtocol
+      {
+        Encoding = Encoding,
+        Terminator = Terminator
+      };
     }
 
     protected override void InitSession(NetMessageSession session)

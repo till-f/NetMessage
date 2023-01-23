@@ -89,6 +89,23 @@ namespace NetMessage.Base
       }
     }
 
+    public TSession? TryGetSession(Guid sessionId)
+    {
+      lock (_sessions)
+      {
+        if (_sessions.ContainsKey(sessionId))
+        {
+          var session = _sessions[sessionId];
+          if (session.IsConnected)
+          {
+            return _sessions[sessionId];
+          }
+        }
+      }
+
+      return null;
+    }
+
     internal void NotifySessionError(TSession session, string message)
     {
       OnError?.Invoke((TServer)this, $"Error in session {session.Guid} (Port {session.RemoteEndPoint?.Port}): {message}");

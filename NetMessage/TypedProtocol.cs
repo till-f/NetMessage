@@ -22,9 +22,11 @@ namespace NetMessage
   // Response  <TypeId:ResonseId:Payload
   public class TypedProtocol : IProtocol<TypedPayload>
   {
-    private const char _separatorToken = ':';
-    private const char _requestToken = '>';
-    private const char _responseToken = '<';
+    public const string DefaultTerminator = "\u0004";
+
+    private const char SeparatorToken = ':';
+    private const char RequestToken = '>';
+    private const char ResponseToken = '<';
 
     private string _buffer = string.Empty;
 
@@ -36,7 +38,7 @@ namespace NetMessage
     /// <summary>
     /// The termination sequence (default is the EOT character, ASCII code 0x4)
     /// </summary>
-    public string Terminator { get; set; } = "\u0004";
+    public string Terminator { get; set; } = DefaultTerminator;
 
     public IList<IMessage<TypedPayload>> FromRaw(byte[] rawData)
     {
@@ -71,10 +73,10 @@ namespace NetMessage
       EMessageKind messageKind;
       switch (rawString[0])
       {
-        case _requestToken:
+        case RequestToken:
           messageKind = EMessageKind.Request;
           break;
-        case _responseToken:
+        case ResponseToken:
           messageKind = EMessageKind.Response;
           break;
         default:
@@ -84,13 +86,13 @@ namespace NetMessage
 
       var startIdx = messageKind == EMessageKind.Message ? 0 : 1;
 
-      var sepIdx1 = rawString.IndexOf(_separatorToken);
+      var sepIdx1 = rawString.IndexOf(SeparatorToken);
       if (sepIdx1 < 0)
       {
         throw new InvalidOperationException($"Unsupported message format: 1st separator not found");
       }
 
-      var sepIdx2 = rawString.IndexOf(_separatorToken, sepIdx1 + 1);
+      var sepIdx2 = rawString.IndexOf(SeparatorToken, sepIdx1 + 1);
       if (sepIdx2 < 0)
       {
         throw new InvalidOperationException($"Unsupported message format: 2nd separator not found");
@@ -149,10 +151,10 @@ namespace NetMessage
           messageKindToken = string.Empty;
           break;
         case EMessageKind.Request:
-          messageKindToken = _requestToken.ToString();
+          messageKindToken = RequestToken.ToString();
           break;
         case EMessageKind.Response:
-          messageKindToken = _responseToken.ToString();
+          messageKindToken = ResponseToken.ToString();
           break;
         default:
           throw new InvalidOperationException();
@@ -163,9 +165,9 @@ namespace NetMessage
       var sb = new StringBuilder();
       sb.Append(messageKindToken);
       sb.Append(payload.TypeId);
-      sb.Append(_separatorToken);
+      sb.Append(SeparatorToken);
       sb.Append(responseIdString);
-      sb.Append(_separatorToken);
+      sb.Append(SeparatorToken);
       sb.Append(payload.ActualPayload);
       sb.Append(Terminator);
 
