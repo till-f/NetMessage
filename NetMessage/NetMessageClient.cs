@@ -51,7 +51,8 @@ namespace NetMessage
       return SendMessageInternalAsync(new TypedPayload(typeId, serialized));
     }
 
-    public async Task<TRsp> SendRequestAsync<TRsp>(IRequest<TRsp> request)
+    // TODO: return Task<TRsp?> here (requires language version 9.0+)
+    public async Task<TTRsp> SendRequestAsync<TTRsp>(IRequest<TTRsp> request)
     {
       string typeId = request.GetType().FullName;
       string serialized = _payloadConverter.Serialize(request);
@@ -60,10 +61,12 @@ namespace NetMessage
       // result is null if task was cancelled normally (abnormal cancellations or failures will throw)
       if (result == null)
       {
-        return default(TRsp);
+#pragma warning disable CS8603
+        return default;
+#pragma warning restore CS8603
       }
 
-      return _payloadConverter.Deserialize<TRsp>(result.Payload.ActualPayload);
+      return _payloadConverter.Deserialize<TTRsp>(result.Payload.ActualPayload);
     }
 
     protected override TypedProtocol CreateProtocolBuffer()

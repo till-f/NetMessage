@@ -7,14 +7,14 @@ namespace NetMessage.Base.Message
     where TRequest : Request<TRequest, TProtocol, TPld>
     where TProtocol : class, IProtocol<TPld>
   {
-    private Func<TPld, int, byte[]> _toRawResponse;
-    private Func<byte[], Task<bool>> _sendRawData;
-    private Action<string> _notifyError;
+    private Func<TPld, int, byte[]>? _toRawResponse;
+    private Func<byte[], Task<bool>>? _sendRawData;
+    private Action<string>? _notifyError;
 
     /// <summary>
     /// Container for a response (in contrast to message and request)
     /// </summary>
-    public Request(TPld payload, int requestId)
+    protected Request(TPld payload, int requestId)
     {
       Payload = payload;
       RequestId = requestId;
@@ -32,12 +32,12 @@ namespace NetMessage.Base.Message
     {
       try
       {
-        var rawData = _toRawResponse(response, RequestId);
-        return _sendRawData(rawData);
+        var rawData = _toRawResponse!(response, RequestId);
+        return _sendRawData!(rawData);
       }
       catch (Exception ex)
       {
-        _notifyError($"Protocol buffer threw {ex.GetType().Name}: {ex.Message}");
+        _notifyError!($"Protocol buffer threw {ex.GetType().Name}: {ex.Message}");
         return Task.FromResult(false);
       }
     }

@@ -99,7 +99,7 @@ namespace NetMessage.Examples.SimpleString.Client
     private static async void RequestAndResponseExample(SimpleStringClient client)
     {
       var response = await client.SendRequestAsync("How is the weather?");
-      Console.WriteLine($"RECEIVED RESPONSE: {response.Payload}");
+      Console.WriteLine($"RECEIVED RESPONSE: {response?.Payload}");
     }
   }
 }

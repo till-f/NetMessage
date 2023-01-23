@@ -9,7 +9,7 @@ namespace NetMessage.Examples.TypeSafe
 
   public class WeatherRequest : IRequest<WeatherResponse>
   {
-    public string City { get; set; }
+    public string City { get; set; } = string.Empty;
 
     public DateTime Date { get; set; }
   }

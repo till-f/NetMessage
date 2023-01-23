@@ -16,19 +16,15 @@ namespace NetMessage.Base
     private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
     private int _responseIdCounter;
 
-    protected CommunicatorBase()
-    {
-    }
-
     /// <summary>
     /// Used to retrieve the remote socket.
     /// </summary>
-    protected abstract Socket RemoteSocket { get; }
+    protected abstract Socket? RemoteSocket { get; }
 
     /// <summary>
     /// The protocol specific buffer used for sending / receiving.
     /// </summary>
-    protected abstract TProtocol ProtocolBuffer { get; }
+    protected abstract TProtocol? ProtocolBuffer { get; }
 
     /// <summary>
     /// Called when the connection was closed.
@@ -92,7 +88,7 @@ namespace NetMessage.Base
     /// Sends request to the remote socket and awaits the corresponding response.
     /// Protected because concrete implementations may prefer that this method is not exposed.
     /// </summary>
-    protected async Task<Response<TPld>> SendRequestInternalAsync(TPld requestPayload)
+    protected async Task<Response<TPld>?> SendRequestInternalAsync(TPld requestPayload)
     {
       int responseId;
       lock (_responseEvents)
@@ -103,7 +99,7 @@ namespace NetMessage.Base
       byte[] rawData;
       try
       {
-        rawData = ProtocolBuffer.ToRawRequest(requestPayload, responseId);
+        rawData = ProtocolBuffer!.ToRawRequest(requestPayload, responseId);
       }
       catch (Exception ex)
       {
@@ -148,7 +144,7 @@ namespace NetMessage.Base
     {
       try
       {
-        var rawData = ProtocolBuffer.ToRawMessage(messagePayload);
+        var rawData = ProtocolBuffer!.ToRawMessage(messagePayload);
         return SendRawDataAsync(rawData);
       }
       catch (Exception ex)
@@ -169,7 +165,7 @@ namespace NetMessage.Base
         {
           try
           {
-            ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[RemoteSocket.ReceiveBufferSize]);
+            ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[RemoteSocket!.ReceiveBufferSize]);
             var receiveTask = RemoteSocket.ReceiveAsync(buffer, SocketFlags.None);
             receiveTask.Wait(CancellationToken);
 
@@ -187,8 +183,8 @@ namespace NetMessage.Base
 
             //buffer.AsSpan(0, byteCount)
             var rawData = new byte[byteCount];
-            Array.Copy(buffer.Array, rawData, byteCount);
-            foreach (var messageInfo in ProtocolBuffer.FromRaw(rawData))
+            Array.Copy(buffer.Array!, rawData, byteCount);
+            foreach (var messageInfo in ProtocolBuffer!.FromRaw(rawData))
             {
               if (messageInfo is Message<TPld> message)
               {
@@ -197,9 +193,9 @@ namespace NetMessage.Base
               else if (messageInfo is TRequest request)
               {
                 request.SetContext(
-                  (msg, id) => ProtocolBuffer.ToRawResponse(msg, id),
-                  b => SendRawDataAsync(b),
-                  s => NotifyError(s)
+                  (msg, id) => ProtocolBuffer!.ToRawResponse(msg, id),
+                  SendRawDataAsync,
+                  NotifyError
                   );
                 HandleRequest(request);
               }

@@ -1,4 +1,6 @@
-﻿namespace NetMessage
+﻿using System;
+
+namespace NetMessage
 {
   /// <summary>
   /// The payload type for the <see cref="TypedProtocol"/>.
@@ -7,8 +9,8 @@
   {
     public TypedPayload(string typeId, string payload)
     {
-      TypeId = typeId;
-      ActualPayload = payload;
+      TypeId = typeId ?? throw new ArgumentNullException(nameof(typeId));
+      ActualPayload = payload ?? throw new ArgumentNullException(nameof(payload));
     }
 
     public string TypeId { get; }

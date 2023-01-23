@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Globalization;
-using NetMessage.Examples.TypeSafe;
 
-namespace NetMessage.Examples.SimpleString.Server
+namespace NetMessage.Examples.TypeSafe.Server
 {
   public class TypeSafeServerApp
   {
     public const ushort Port = 2012;
 
-    private static NetMessageSession _openSession;
+    private static NetMessageSession? _openSession;
 
     static void Main()
     {
@@ -65,13 +64,13 @@ namespace NetMessage.Examples.SimpleString.Server
 
     private static void OnSessionClosed(NetMessageSession session)
     {
-      Console.WriteLine($"SESSION CLOSED: {session.Guid} (Port {session.RemoteEndPoint.Port})");
+      Console.WriteLine($"SESSION CLOSED: {session.Guid} (Port {session.RemoteEndPoint?.Port})");
       _openSession = null;
     }
 
     private static void OnSessionOpened(NetMessageSession session)
     {
-      Console.WriteLine($"SESSION OPENED: {session.Guid} (Port {session.RemoteEndPoint.Port})");
+      Console.WriteLine($"SESSION OPENED: {session.Guid} (Port {session.RemoteEndPoint?.Port})");
       _openSession = session;
     }
 
@@ -97,7 +96,7 @@ namespace NetMessage.Examples.SimpleString.Server
 
     private static async void RequestAndResponseExample()
     {
-      var response = await _openSession.SendRequestAsync(new CalculationRequest { ValueA = 42.0, ValueB = 1.5 });
+      var response = await _openSession!.SendRequestAsync(new CalculationRequest { ValueA = 42.0, ValueB = 1.5 });
       Console.WriteLine($"RECEIVED RESPONSE: {response.Result}");
     }
   }

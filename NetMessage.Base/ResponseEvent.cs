@@ -12,7 +12,7 @@ namespace NetMessage.Base
       _resetEvent = resetEvent;
     }
 
-    public Response<TPld> Response { get; set; }
+    public Response<TPld>? Response { get; set; }
 
     public void Set()
     {

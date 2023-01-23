@@ -26,8 +26,13 @@ namespace NetMessage
 
     public Task<bool> SendResponseAsync(TTRsp response)
     {
-      string typeId = response.GetType().FullName;
-      string serialized = _payloadConverter.Serialize(response);
+      if (response == null)
+      {
+        return Task.FromResult(false);
+      }
+
+      var typeId = response.GetType().FullName;
+      var serialized = _payloadConverter.Serialize(response);
       return _requestInternal.SendResponseAsync(new TypedPayload(typeId, serialized));
     }
   }
@@ -35,7 +40,7 @@ namespace NetMessage
 
   /// <summary>
   /// Request for the <see cref="TypedProtocol"/>. Only used internally.
-  /// See <see cref="TypedRequest{T}"/> for the corresponding class that is exposed to the user.
+  /// See <see cref="TypedRequest{TTPld, TTRsp}"/> for the corresponding class that is exposed to the user.
   /// </summary>
   public class TypedRequestInternal : Request<TypedRequestInternal, TypedProtocol, TypedPayload>
   {

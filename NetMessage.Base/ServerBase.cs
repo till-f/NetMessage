@@ -18,14 +18,14 @@ namespace NetMessage.Base
     private readonly Dictionary<Guid, TSession> _sessions = new Dictionary<Guid, TSession>();
     private readonly IPEndPoint _endPoint;
 
-    private Socket _socket;
-    private CancellationTokenSource _cancellationTokenSource;
+    private Socket? _socket;
+    private CancellationTokenSource? _cancellationTokenSource;
 
-    public event Action<TSession> SessionOpened;
-    public event Action<TSession> SessionClosed;
-    public event Action<TServer, string> OnError;
-    public event Action<TSession, Message<TPld>> MessageReceived;
-    public event Action<TSession, TRequest> RequestReceived;
+    public event Action<TSession>? SessionOpened;
+    public event Action<TSession>? SessionClosed;
+    public event Action<TServer, string>? OnError;
+    public event Action<TSession, Message<TPld>>? MessageReceived;
+    public event Action<TSession, TRequest>? RequestReceived;
 
     protected ServerBase(int listeningPort)
     {
@@ -76,7 +76,7 @@ namespace NetMessage.Base
 
       lock (_sessions)
       {
-        _cancellationTokenSource.Cancel();
+        _cancellationTokenSource!.Cancel();
         _socket?.Close();
         _socket?.Dispose();
         _socket = null;
@@ -89,26 +89,9 @@ namespace NetMessage.Base
       }
     }
 
-    public TSession TryGetSession(Guid sessionId)
-    {
-      lock (_sessions)
-      {
-        if (_sessions.ContainsKey(sessionId))
-        {
-          var session = _sessions[sessionId];
-          if (session.IsConnected)
-          {
-            return _sessions[sessionId];
-          }
-        }
-      }
-
-      return null;
-    }
-
     internal void NotifySessionError(TSession session, string message)
     {
-      OnError?.Invoke((TServer)this, $"Error in session {session.Guid} (Port {session.RemoteEndPoint.Port}): {message}");
+      OnError?.Invoke((TServer)this, $"Error in session {session.Guid} (Port {session.RemoteEndPoint?.Port}): {message}");
     }
 
     internal void NotifySessionClosed(TSession session)
@@ -133,13 +116,13 @@ namespace NetMessage.Base
       RequestReceived?.Invoke(session, request);
     }
 
-    private Task AcceptConnectionsAsync()
+    private void AcceptConnectionsAsync()
     {
-      return Task.Run(() =>
+      Task.Run(() =>
       {
         while (true)
         {
-          TSession session = null;
+          TSession? session = null;
           try
           {
             if (_socket == null)
@@ -148,7 +131,7 @@ namespace NetMessage.Base
             }
 
             var acceptTask = _socket.AcceptAsync();
-            acceptTask.Wait(_cancellationTokenSource.Token);
+            acceptTask.Wait(_cancellationTokenSource!.Token);
 
             if (!acceptTask.IsCompleted)
             {
@@ -170,7 +153,6 @@ namespace NetMessage.Base
               {
                 remoteSocket.Close();
                 remoteSocket.Dispose();
-                remoteSocket = null;
                 return;
               }
 

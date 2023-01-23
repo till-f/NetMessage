@@ -11,10 +11,10 @@ namespace NetMessage.Base
     where TRequest : Request<TRequest, TProtocol, TPld>
     where TProtocol : class, IProtocol<TPld>
   {
-    private Socket _remoteSocket;
-    private TProtocol _protocolBuffer;
+    private Socket? _remoteSocket;
+    private TProtocol? _protocolBuffer;
 
-    public SessionBase()
+    protected SessionBase()
     {
       Guid = Guid.NewGuid();
     }
@@ -24,40 +24,40 @@ namespace NetMessage.Base
       Server = server;
       _remoteSocket = remoteSocket;
       _protocolBuffer = protocolBuffer;
-      RemoteEndPoint = _remoteSocket.RemoteEndPoint as IPEndPoint;
+      RemoteEndPoint = (IPEndPoint)_remoteSocket.RemoteEndPoint;
       ReceiveAsync();
     }
 
     public Guid Guid { get; }
 
-    public TServer Server { get; private set; }
+    public TServer? Server { get; private set; }
 
-    public IPEndPoint RemoteEndPoint { get; private set; }
+    public IPEndPoint? RemoteEndPoint { get; private set; }
 
-    protected override Socket RemoteSocket => _remoteSocket;
+    protected override Socket? RemoteSocket => _remoteSocket;
 
-    protected override TProtocol ProtocolBuffer => _protocolBuffer;
+    protected override TProtocol? ProtocolBuffer => _protocolBuffer;
 
     protected override void HandleMessage(Message<TPld> message)
     {
-      Server.NotifyMessagesRecieved((TSession)this, message);
+      Server!.NotifyMessagesRecieved((TSession)this, message);
     }
 
     protected override void HandleRequest(TRequest request)
     {
-      Server.NotifyRequestRecieved((TSession)this, request);
+      Server!.NotifyRequestRecieved((TSession)this, request);
     }
 
     protected override void NotifyClosed()
     {
       _remoteSocket = null;
       _protocolBuffer = null;
-      Server.NotifySessionClosed((TSession)this);
+      Server!.NotifySessionClosed((TSession)this);
     }
 
     protected override void NotifyError(string errorMessage)
     {
-      Server.NotifySessionError((TSession)this, errorMessage);
+      Server!.NotifySessionError((TSession)this, errorMessage);
     }
   }
 }

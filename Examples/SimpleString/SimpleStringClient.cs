@@ -15,7 +15,7 @@ namespace NetMessage.Examples.SimpleString
       return SendMessageInternalAsync(message);
     }
 
-    public Task<Response<string>> SendRequestAsync(string request)
+    public Task<Response<string>?> SendRequestAsync(string request)
     {
       return SendRequestInternalAsync(request);
     }

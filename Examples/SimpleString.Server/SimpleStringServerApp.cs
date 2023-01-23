@@ -7,7 +7,7 @@ namespace NetMessage.Examples.SimpleString.Server
   {
     public const ushort Port = 2012;
 
-    private static SimpleStringSession _openSession;
+    private static SimpleStringSession? _openSession;
 
     static void Main()
     {
@@ -72,13 +72,13 @@ namespace NetMessage.Examples.SimpleString.Server
 
     private static void OnSessionClosed(SimpleStringSession session)
     {
-      Console.WriteLine($"SESSION CLOSED: {session.Guid} (Port {session.RemoteEndPoint.Port})");
+      Console.WriteLine($"SESSION CLOSED: {session.Guid} (Port {session.RemoteEndPoint?.Port})");
       _openSession = null;
     }
 
     private static void OnSessionOpened(SimpleStringSession session)
     {
-      Console.WriteLine($"SESSION OPENED: {session.Guid} (Port {session.RemoteEndPoint.Port})");
+      Console.WriteLine($"SESSION OPENED: {session.Guid} (Port {session.RemoteEndPoint?.Port})");
       _openSession = session;
     }
 
@@ -89,8 +89,8 @@ namespace NetMessage.Examples.SimpleString.Server
 
     private static async void RequestAndResponseExample()
     {
-      var response = await _openSession.SendRequestAsync("Do you like me?");
-      Console.WriteLine($"RECEIVED RESPONSE: {response.Payload}");
+      var response = await _openSession!.SendRequestAsync("Do you like me?");
+      Console.WriteLine($"RECEIVED RESPONSE: {response?.Payload}");
     }
   }
 }

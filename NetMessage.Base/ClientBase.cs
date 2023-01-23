@@ -10,18 +10,14 @@ namespace NetMessage.Base
     where TRequest : Request<TRequest, TProtocol, TPld>
     where TProtocol : class, IProtocol<TPld>
   {
-    private Socket _remoteSocket;
-    private TProtocol _protocolBuffer;
+    private Socket? _remoteSocket;
+    private TProtocol? _protocolBuffer;
 
-    public event Action<TClient> Connected;
-    public event Action<TClient> Disconnected;
-    public event Action<TClient, string> OnError;
-    public event Action<TClient, Message<TPld>> MessageReceived;
-    public event Action<TClient, TRequest> RequestReceived;
-
-    protected ClientBase()
-    {
-    }
+    public event Action<TClient>? Connected;
+    public event Action<TClient>? Disconnected;
+    public event Action<TClient, string>? OnError;
+    public event Action<TClient, Message<TPld>>? MessageReceived;
+    public event Action<TClient, TRequest>? RequestReceived;
 
     /// <summary>
     /// Called to create a protocol buffer that is used exclusively for one session.
@@ -29,9 +25,9 @@ namespace NetMessage.Base
     /// </summary>
     protected abstract TProtocol CreateProtocolBuffer();
 
-    protected override Socket RemoteSocket => _remoteSocket;
+    protected override Socket? RemoteSocket => _remoteSocket;
 
-    protected override TProtocol ProtocolBuffer => _protocolBuffer;
+    protected override TProtocol? ProtocolBuffer => _protocolBuffer;
 
     public Task<bool> ConnectAsync(string remoteHost, int remotePort)
     {
