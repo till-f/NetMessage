@@ -58,7 +58,7 @@ namespace NetMessage
         }
         else
         {
-          var rawString = _buffer + text.Substring(offset, eotPos);
+          var rawString = _buffer + text.Substring(offset, eotPos-offset);
           messages.Add(ParseMessage(rawString));
           _buffer = string.Empty;
           offset = eotPos + Terminator.Length;

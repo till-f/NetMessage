@@ -78,9 +78,9 @@ namespace NetMessage.Examples.TypeSafe.Server
       _openSession = session;
     }
 
-    private static void OnError(NetMessageServer server, string errorMessage)
+    private static void OnError(NetMessageServer server, NetMessageSession? session, string errorMessage, Exception? ex)
     {
-      Console.WriteLine($"ERROR: {errorMessage}");
+      Console.WriteLine($"ERROR: {errorMessage} {ex?.Message}");
     }
 
     private static void StringMessageHandler(NetMessageSession sesion, string stringMessage)

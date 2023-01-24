@@ -10,12 +10,14 @@ namespace NetMessage.Base
     where TRequest : Request<TRequest, TProtocol, TPld>
     where TProtocol : class, IProtocol<TPld>
   {
+    private readonly QueuedLockProvider _connectLockProvider = new QueuedLockProvider();
+
     private Socket? _remoteSocket;
     private TProtocol? _protocolBuffer;
 
     public event Action<TClient>? Connected;
     public event Action<TClient>? Disconnected;
-    public event Action<TClient, string>? OnError;
+    public event Action<TClient, string, Exception?>? OnError;
     public event Action<TClient, Message<TPld>>? MessageReceived;
     public event Action<TClient, TRequest>? RequestReceived;
 
@@ -36,7 +38,7 @@ namespace NetMessage.Base
         try
         {
           // only one connection attempt at once
-          lock (this)
+          using (_connectLockProvider.GetLock())
           {
             if (IsConnected)
             {
@@ -98,9 +100,9 @@ namespace NetMessage.Base
       Disconnected?.Invoke((TClient)this);
     }
 
-    protected override void NotifyError(string errorMessage)
+    protected override void NotifyError(string errorMessage, Exception? exception)
     {
-      OnError?.Invoke((TClient)this, errorMessage);
+      OnError?.Invoke((TClient)this, errorMessage, exception);
     }
 
     public void Dispose()

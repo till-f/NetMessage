@@ -9,7 +9,7 @@ namespace NetMessage.Base.Message
   {
     private Func<TPld, int, byte[]>? _toRawResponse;
     private Func<byte[], Task<bool>>? _sendRawData;
-    private Action<string>? _notifyError;
+    private Action<string, Exception?>? _notifyError;
 
     /// <summary>
     /// Container for a response (in contrast to message and request)
@@ -37,12 +37,12 @@ namespace NetMessage.Base.Message
       }
       catch (Exception ex)
       {
-        _notifyError!($"Protocol buffer threw {ex.GetType().Name}: {ex.Message}");
+        _notifyError!($"{ex.GetType().Name} while converting to raw format", ex);
         return Task.FromResult(false);
       }
     }
 
-    public void SetContext(Func<TPld, int, byte[]> toRawResponse, Func<byte[], Task<bool>> sendRawData, Action<string> notifyError)
+    public void SetContext(Func<TPld, int, byte[]> toRawResponse, Func<byte[], Task<bool>> sendRawData, Action<string, Exception?> notifyError)
     {
       _toRawResponse = toRawResponse;
       _sendRawData = sendRawData;

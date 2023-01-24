@@ -82,9 +82,9 @@ namespace NetMessage.Examples.SimpleString.Server
       _openSession = session;
     }
 
-    private static void OnError(SimpleStringServer server, string errorMessage)
+    private static void OnError(SimpleStringServer server, SimpleStringSession? session, string errorMessage, Exception? ex)
     {
-      Console.WriteLine($"ERROR: {errorMessage}");
+      Console.WriteLine($"ERROR: {errorMessage} {ex?.Message}");
     }
 
     private static async void RequestAndResponseExample()

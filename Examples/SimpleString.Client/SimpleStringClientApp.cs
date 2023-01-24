@@ -91,9 +91,9 @@ namespace NetMessage.Examples.SimpleString.Client
       Console.WriteLine("CONNECTED");
     }
 
-    private static void OnError(SimpleStringClient client, string errorMessage)
+    private static void OnError(SimpleStringClient client, string errorMessage, Exception? ex)
     {
-      Console.WriteLine($"ERROR: {errorMessage}");
+      Console.WriteLine($"ERROR: {errorMessage} {ex?.Message}");
     }
 
     private static async void RequestAndResponseExample(SimpleStringClient client)

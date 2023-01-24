@@ -55,9 +55,9 @@ namespace NetMessage.Base
       Server!.NotifySessionClosed((TSession)this);
     }
 
-    protected override void NotifyError(string errorMessage)
+    protected override void NotifyError(string errorMessage, Exception? exception)
     {
-      Server!.NotifySessionError((TSession)this, errorMessage);
+      Server!.NotifySessionError((TSession)this, errorMessage, exception);
     }
   }
 }

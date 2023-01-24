@@ -87,9 +87,9 @@ namespace NetMessage.Examples.TypeSafe.Client
       Console.WriteLine("CONNECTED");
     }
 
-    private static void OnError(NetMessageClient client, string errorMessage)
+    private static void OnError(NetMessageClient client, string errorMessage, Exception? ex)
     {
-      Console.WriteLine($"ERROR: {errorMessage}");
+      Console.WriteLine($"ERROR: {errorMessage} {ex?.Message}");
     }
 
     private static void StringMessageHandler(NetMessageClient arg1, string stringMessage)

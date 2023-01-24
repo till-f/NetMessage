@@ -23,7 +23,7 @@ namespace NetMessage.Base
 
     public event Action<TSession>? SessionOpened;
     public event Action<TSession>? SessionClosed;
-    public event Action<TServer, string>? OnError;
+    public event Action<TServer, TSession?, string, Exception?>? OnError;
     public event Action<TSession, Message<TPld>>? MessageReceived;
     public event Action<TSession, TRequest>? RequestReceived;
 
@@ -60,7 +60,7 @@ namespace NetMessage.Base
       }
       catch (Exception ex)
       {
-        OnError?.Invoke((TServer)this, $"Could not start listening on socket: {ex.Message}");
+        OnError?.Invoke((TServer)this, null, "Could not start listening on socket", ex);
         _socket.Dispose();
         _socket = null;
       }
@@ -106,9 +106,9 @@ namespace NetMessage.Base
       return null;
     }
 
-    internal void NotifySessionError(TSession session, string message)
+    internal void NotifySessionError(TSession session, string message, Exception? exception)
     {
-      OnError?.Invoke((TServer)this, $"Error in session {session.Guid} (Port {session.RemoteEndPoint?.Port}): {message}");
+      OnError?.Invoke((TServer)this, session, message, exception);
     }
 
     internal void NotifySessionClosed(TSession session)
@@ -196,11 +196,11 @@ namespace NetMessage.Base
 
             if (ex.InnerException is SocketException se)
             {
-              OnError?.Invoke((TServer)this, $"{se.SocketErrorCode} - {se.Message}");
+              OnError?.Invoke((TServer)this, null, $"Socket Error {se.SocketErrorCode}", se);
               return;
             }
 
-            OnError?.Invoke((TServer)this, $"Unexpected {ex.GetType().Name}: {ex.Message}");
+            OnError?.Invoke((TServer)this, null, $"Unexpected {ex.GetType().Name}", ex);
           }
         }
       });

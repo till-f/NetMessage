@@ -12,6 +12,7 @@ namespace NetMessage.Base
     where TProtocol : class, IProtocol<TPld>
   {
     private readonly ConcurrentDictionary<int, ResponseEvent<TPld>> _responseEvents = new ConcurrentDictionary<int, ResponseEvent<TPld>>();
+    private readonly QueuedLockProvider _sendLockProvider = new QueuedLockProvider();
 
     private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
     private int _responseIdCounter;
@@ -35,7 +36,7 @@ namespace NetMessage.Base
     /// Called when an error occured.
     /// If the error breaks the connection, <see cref="NotifyClosed"/> is called first.
     /// </summary>
-    protected abstract void NotifyError(string errorMessage);
+    protected abstract void NotifyError(string errorMessage, Exception? exception);
 
     /// <summary>
     /// Called for every message received.
@@ -77,7 +78,7 @@ namespace NetMessage.Base
     {
       if (IsConnected)
       {
-        NotifyError("Cannot reset CancellationToken because socket is connected");
+        NotifyError("Cannot reset CancellationToken because socket is connected", null);
         return;
       }
 
@@ -103,7 +104,7 @@ namespace NetMessage.Base
       }
       catch (Exception ex)
       {
-        NotifyError($"Protocol buffer threw {ex.GetType().Name}: {ex.Message}");
+        NotifyError($"{ex.GetType().Name} while converting to raw format", ex);
         throw;
       }
 
@@ -149,7 +150,7 @@ namespace NetMessage.Base
       }
       catch (Exception ex)
       {
-        NotifyError($"Protocol buffer threw {ex.GetType().Name}: {ex.Message}");
+        NotifyError($"{ex.GetType().Name} while converting to raw format", ex);
         return Task.FromResult(false);
       }
     }
@@ -159,7 +160,7 @@ namespace NetMessage.Base
     /// </summary>
     protected Task ReceiveAsync()
     {
-      return Task.Run(() =>
+      var receiveTask = Task.Run(() =>
       {
         while (true)
         {
@@ -181,10 +182,10 @@ namespace NetMessage.Base
               continue;
             }
 
-            //buffer.AsSpan(0, byteCount)
             var rawData = new byte[byteCount];
             Array.Copy(buffer.Array!, rawData, byteCount);
-            foreach (var messageInfo in ProtocolBuffer!.FromRaw(rawData))
+            var receivedMessages = ProtocolBuffer!.FromRaw(rawData);
+            foreach (var messageInfo in receivedMessages)
             {
               if (messageInfo is Message<TPld> message)
               {
@@ -213,7 +214,14 @@ namespace NetMessage.Base
             if (HandleException(ex)) return;
           }
         }
-      });
+      }, CancellationToken);
+
+      // The receive task is very robust and almost impossible to fail. Any exception is propagated via the OnError event.
+      // Only if an exception occurs inside an OnError handler, this exception would stop the receive thread more or less silently.
+      // To avoid this, we fail/crash the environment if the receive task faulted.
+      receiveTask.ContinueWith(c => Environment.FailFast($"Receive task faulted: {c.Exception?.Message}", c.Exception), TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
+
+      return receiveTask;
     }
 
     protected Task<bool> SendRawDataAsync(byte[] rawData)
@@ -221,17 +229,17 @@ namespace NetMessage.Base
       return Task.Run(() =>
       {
         // only one send request per communicator at once
-        lock (this)
+        using (_sendLockProvider.GetLock())
         {
           try
           {
             if (!IsConnected)
             {
-              NotifyError("Cannot send to socket because it is not connected");
+              NotifyError("Cannot send to socket because it is not connected", null);
               return false;
             }
 
-            var sendTask = RemoteSocket.SendAsync(new ArraySegment<byte>(rawData), SocketFlags.None);
+            var sendTask = RemoteSocket!.SendAsync(new ArraySegment<byte>(rawData), SocketFlags.None);
             sendTask.Wait(CancellationToken);
 
             if (!sendTask.IsCompleted)
@@ -248,7 +256,7 @@ namespace NetMessage.Base
             return false;
           }
         }
-      });
+      }, CancellationToken);
     }
 
     /// <summary>
@@ -267,7 +275,7 @@ namespace NetMessage.Base
       {
         if (se.SocketErrorCode != SocketError.ConnectionReset)
         {
-          NotifyError($"{se.SocketErrorCode} - {se.Message}");
+          NotifyError($"Socket Error {se.SocketErrorCode}", se);
         }
 
         // TODO: depending on kind of error, Close or try to Reconnect
@@ -275,7 +283,7 @@ namespace NetMessage.Base
         return true;
       }
 
-      NotifyError($"Unexpected {ex.GetType().Name}: {ex.Message}");
+      NotifyError($"Unexpected {ex.GetType().Name}", ex);
 
       // It is possible that the connection was closed after the wait completed, but before next wait started.
       // In that case, a NullReferenceException (or similar) might be thrown because the RemoteSocket is not
@@ -283,7 +291,6 @@ namespace NetMessage.Base
       // ignore the error.
       if (CancellationToken.IsCancellationRequested)
       {
-        // let's see how ofthen this occurs in reality...
         Console.WriteLine($"DEBUG: Exception above was thrown after cancellation was requested!");
         return true;
       }
