@@ -7,13 +7,7 @@ namespace NetMessage.Integration.Test.TestFramework
   [TestClass]
   public class TestBase
   {
-    public static TestContext? TestContext { get; private set; }
-
-    [ClassInitialize]
-    public static void TestBaseClassInitialize(TestContext testContext)
-    {
-      TestContext = testContext;
-    }
+    public TestContext? TestContext { get; set; }
 
     [TestInitialize]
     public void TestBaseInitialize()

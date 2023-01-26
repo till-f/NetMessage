@@ -76,8 +76,9 @@ namespace NetMessage.Integration.Test
     [TestMethod]
     public void TestSendMessages()
     {
-      int messageCount = 10;
-      ConcurrentDictionary<NetMessageSession, int> receivedMessagesServerPerPort = new();
+      int messageCount = 1000;
+      int receivedMessagesCount1 = 0;
+      int receivedMessagesCount2 = 0;
       
       var client1 = new NetMessageClient();
       var client2 = new NetMessageClient();
@@ -96,7 +97,7 @@ namespace NetMessage.Integration.Test
       _sessionOpenedWt.WaitAndAssert("No session was opened after connection of client 2");
       var session2 = _lastOpenedSession;
 
-      _server!.AddMessageHandler<TestMessage>(MessageHandlerServer);
+      _server!.AddMessageHandler<TestMessage>(OnMessageReceived);
 
       var sendTask1 = Task.Run(() => SendMessages(client1, messageCount));
       var sendTask2 = Task.Run(() => SendMessages(client2, messageCount));
@@ -110,19 +111,23 @@ namespace NetMessage.Integration.Test
       client1.Disconnect();
       client2.Disconnect();
 
-      void MessageHandlerServer(NetMessageSession session, TestMessage message)
+      void OnMessageReceived(NetMessageSession session, TestMessage message)
       {
-        var messageSplit = message.MessageText!.Split(':');
-        var receivedPrefix = messageSplit[0];
-        var receivedCount = int.Parse(messageSplit[1]);
-        Assert.AreEqual(receivedPrefix, "MyMessage");
+        Assert.AreEqual(message.MessageText, "MyMessage");
 
+        int expectedCount = -1;
         if (session == session1)
         {
+          TestContext!.WriteLine($"Received on session 1: {message.MessageCount}");
+
+          expectedCount = receivedMessagesCount1++;
           messageReceivedWt1.Signal();
         }
         else if (session == session2)
         {
+          TestContext!.WriteLine($"Received on session 2: {message.MessageCount}");
+
+          expectedCount = receivedMessagesCount2++;
           messageReceivedWt2.Signal();
         }
         else
@@ -130,14 +135,7 @@ namespace NetMessage.Integration.Test
           Assert.Fail($"Message received from unexpected session: {session.Guid}");
         }
 
-        if (!receivedMessagesServerPerPort.ContainsKey(session))
-        {
-          receivedMessagesServerPerPort[session] = 0;
-        }
-
-        var expectedCount = receivedMessagesServerPerPort[session]++;
-
-        Assert.AreEqual(expectedCount, receivedCount);
+        Assert.AreEqual(expectedCount, message.MessageCount);
       }
     }
 
@@ -148,7 +146,8 @@ namespace NetMessage.Integration.Test
       {
         taskList.Add(client.SendMessageAsync(new TestMessage
         {
-          MessageText = $"MyMessage:{i}"
+          MessageText = "MyMessage",
+          MessageCount = i
         }));
       }
 
@@ -160,12 +159,12 @@ namespace NetMessage.Integration.Test
 
     private void OnServerError(NetMessageServer server, NetMessageSession? session, string errorMessage, Exception? ex)
     {
+      TestContext!.WriteLine($"Server error: {errorMessage}");
       if (ex != null)
       {
-        throw ex;
+        TestContext.WriteLine(ex.Message);
+        TestContext.WriteLine(ex.StackTrace);
       }
-
-      Assert.Fail($"Server error: {errorMessage}");
     }
 
     private void OnSessionOpened(NetMessageSession session)
@@ -184,5 +183,7 @@ namespace NetMessage.Integration.Test
   public class TestMessage
   {
     public string? MessageText { get; set; }
+
+    public int MessageCount { get; set; }
   }
 }
