@@ -2,6 +2,7 @@
 using System;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using NetMessage.Base.MockSupport;
 
 namespace NetMessage.Base
 {
@@ -12,7 +13,7 @@ namespace NetMessage.Base
   {
     private readonly QueuedLockProvider _connectLockProvider = new QueuedLockProvider();
 
-    private Socket? _remoteSocket;
+    private ISocket? _remoteSocket;
     private TProtocol? _protocolBuffer;
 
     public event Action<TClient>? Connected;
@@ -27,7 +28,7 @@ namespace NetMessage.Base
     /// </summary>
     protected abstract TProtocol CreateProtocolBuffer();
 
-    protected override Socket? RemoteSocket => _remoteSocket;
+    protected override ISocket? RemoteSocket => _remoteSocket;
 
     protected override TProtocol? ProtocolBuffer => _protocolBuffer;
 
@@ -47,7 +48,7 @@ namespace NetMessage.Base
 
             ResetCancellationToken();
 
-            _remoteSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            _remoteSocket = SocketFactory.CreateSocket(SocketType.Stream, ProtocolType.Tcp);
             _protocolBuffer = CreateProtocolBuffer();
             var connectTask = _remoteSocket.ConnectAsync(remoteHost, remotePort);
             connectTask.Wait();

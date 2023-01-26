@@ -17,6 +17,12 @@ namespace NetMessage.Integration.Test
     private NetMessageSession? _lastOpenedSession;
     private NetMessageSession? _lastClosedSession;
 
+    [ClassInitialize]
+    public static void TestClassInitialize(TestContext testContext)
+    {
+      //SocketFactory.Instance = new TestSocketFactory();
+    }
+
     [TestInitialize]
     public void TestInitialize()
     {

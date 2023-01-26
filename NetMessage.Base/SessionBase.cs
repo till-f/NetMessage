@@ -1,7 +1,7 @@
 ﻿using NetMessage.Base.Message;
 using System;
 using System.Net;
-using System.Net.Sockets;
+using NetMessage.Base.MockSupport;
 
 namespace NetMessage.Base
 {
@@ -11,7 +11,7 @@ namespace NetMessage.Base
     where TRequest : Request<TRequest, TProtocol, TPld>
     where TProtocol : class, IProtocol<TPld>
   {
-    private Socket? _remoteSocket;
+    private ISocket? _remoteSocket;
     private TProtocol? _protocolBuffer;
 
     protected SessionBase()
@@ -19,12 +19,12 @@ namespace NetMessage.Base
       Guid = Guid.NewGuid();
     }
 
-    internal void InitAndStart(TServer server, Socket remoteSocket, TProtocol protocolBuffer)
+    internal void InitAndStart(TServer server, ISocket remoteSocket, TProtocol protocolBuffer)
     {
       Server = server;
       _remoteSocket = remoteSocket;
       _protocolBuffer = protocolBuffer;
-      RemoteEndPoint = (IPEndPoint)_remoteSocket.RemoteEndPoint;
+      RemoteEndPoint = _remoteSocket.RemoteEndPoint;
       ReceiveAsync();
     }
 
@@ -34,7 +34,7 @@ namespace NetMessage.Base
 
     public IPEndPoint? RemoteEndPoint { get; private set; }
 
-    protected override Socket? RemoteSocket => _remoteSocket;
+    protected override ISocket? RemoteSocket => _remoteSocket;
 
     protected override TProtocol? ProtocolBuffer => _protocolBuffer;
 

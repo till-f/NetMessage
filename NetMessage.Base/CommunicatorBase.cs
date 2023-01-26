@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using NetMessage.Base.MockSupport;
 
 namespace NetMessage.Base
 {
@@ -20,7 +21,7 @@ namespace NetMessage.Base
     /// <summary>
     /// Used to retrieve the remote socket.
     /// </summary>
-    protected abstract Socket? RemoteSocket { get; }
+    protected abstract ISocket? RemoteSocket { get; }
 
     /// <summary>
     /// The protocol specific buffer used for sending / receiving.

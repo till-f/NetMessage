@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using NetMessage.Base.MockSupport;
 
 namespace NetMessage.Base
 {
@@ -18,7 +19,7 @@ namespace NetMessage.Base
     private readonly Dictionary<Guid, TSession> _sessions = new Dictionary<Guid, TSession>();
     private readonly IPEndPoint _endPoint;
 
-    private Socket? _socket;
+    private ISocket? _socket;
     private CancellationTokenSource? _cancellationTokenSource;
 
     public event Action<TSession>? SessionOpened;
@@ -52,7 +53,7 @@ namespace NetMessage.Base
       }
 
       _cancellationTokenSource = new CancellationTokenSource();
-      _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+      _socket = SocketFactory.CreateSocket(SocketType.Stream, ProtocolType.Tcp);
       _socket.Bind(_endPoint);
       try
       {
