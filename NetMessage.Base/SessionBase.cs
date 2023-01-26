@@ -25,7 +25,7 @@ namespace NetMessage.Base
       _remoteSocket = remoteSocket;
       _protocolBuffer = protocolBuffer;
       RemoteEndPoint = (IPEndPoint)_remoteSocket.RemoteEndPoint;
-      ReceiveAsync();
+      StartReceiveAsync();
     }
 
     public Guid Guid { get; }

@@ -67,7 +67,7 @@ namespace NetMessage.Examples.SimpleString.Server
     private static void OnRequestReceived(SimpleStringSession session, SimpleStringRequest request)
     {
       Console.WriteLine($"REQUEST RECEIVED: {request.Payload}");
-      request.RespondAsync("Verry sunny!");
+      request.SendResponseAsync("Verry sunny!");
     }
 
     private static void OnSessionClosed(SimpleStringSession session)

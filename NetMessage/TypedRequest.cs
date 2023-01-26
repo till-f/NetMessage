@@ -1,4 +1,5 @@
-﻿using NetMessage.Base.Message;
+﻿using System;
+using NetMessage.Base.Message;
 using System.Threading.Tasks;
 
 namespace NetMessage
@@ -24,13 +25,15 @@ namespace NetMessage
 
     public TTPld Request { get; }
 
-    public Task<bool> SendResponseAsync(TTRsp response)
+    /// <summary>
+    /// Converts the response to its raw format and sends it to the remote socket.
+    /// Exceptions during conversion are thrown synchronously. The asynchronous send task returns
+    /// the number of bytes sent if successful, otherwise it completes with an invalid socket error.
+    /// </summary>
+    public Task<int> SendResponseAsync(TTRsp response)
     {
-      if (response == null)
-      {
-        return Task.FromResult(false);
-      }
-
+      if (response == null) throw new ArgumentNullException(nameof(response));
+      
       var typeId = response.GetType().FullName;
       var serialized = _payloadConverter.Serialize(response);
       return _requestInternal.SendResponseAsync(new TypedPayload(typeId, serialized));
@@ -48,7 +51,7 @@ namespace NetMessage
     {
     }
 
-    internal Task<bool> SendResponseAsync(TypedPayload response)
+    internal Task<int> SendResponseAsync(TypedPayload response)
     {
       return SendResponseInternalAsync(response);
     }

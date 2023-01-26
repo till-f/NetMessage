@@ -8,7 +8,7 @@ namespace NetMessage.Base.Message
     where TProtocol : class, IProtocol<TPld>
   {
     private Func<TPld, int, byte[]>? _toRawResponse;
-    private Func<byte[], Task<bool>>? _sendRawData;
+    private Func<byte[], Task<int>>? _sendRawData;
     private Action<string, Exception?>? _notifyError;
 
     /// <summary>
@@ -25,10 +25,13 @@ namespace NetMessage.Base.Message
     public int RequestId { get; }
 
     /// <summary>
-    /// Sends response to the remote socket.
+    /// Converts the response to its raw format and sends it to the remote socket.
+    /// Exceptions during conversion are thrown synchronously. The asynchronous send task returns
+    /// the number of bytes sent if successful, otherwise it completes with an invalid socket error.
+    /// 
     /// Protected because concrete implementations may prefer that this method is not exposed.
     /// </summary>
-    protected Task<bool> SendResponseInternalAsync(TPld response)
+    protected Task<int> SendResponseInternalAsync(TPld response)
     {
       try
       {
@@ -38,11 +41,11 @@ namespace NetMessage.Base.Message
       catch (Exception ex)
       {
         _notifyError!($"{ex.GetType().Name} while converting to raw format", ex);
-        return Task.FromResult(false);
+        return Task.FromResult(-1);
       }
     }
 
-    public void SetContext(Func<TPld, int, byte[]> toRawResponse, Func<byte[], Task<bool>> sendRawData, Action<string, Exception?> notifyError)
+    public void SetContext(Func<TPld, int, byte[]> toRawResponse, Func<byte[], Task<int>> sendRawData, Action<string, Exception?> notifyError)
     {
       _toRawResponse = toRawResponse;
       _sendRawData = sendRawData;

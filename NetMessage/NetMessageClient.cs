@@ -1,6 +1,5 @@
 ﻿using NetMessage.Base;
 using System;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace NetMessage
@@ -45,13 +44,23 @@ namespace NetMessage
       _receiver.RemoveRequestHandler(requestHandler);
     }
 
-    public Task<bool> SendMessageAsync(object message)
+    /// <summary>
+    /// Converts the message to its raw format and sends it to the remote socket.
+    /// Exceptions during conversion are thrown synchronously. The asynchronous send task returns
+    /// the number of bytes sent if successful, otherwise it completes with an invalid socket error.
+    /// </summary>
+    public Task<int> SendMessageAsync(object message)
     {
       string typeId = message.GetType().FullName;
       string serialized = _payloadConverter.Serialize(message);
       return SendMessageInternalAsync(new TypedPayload(typeId, serialized));
     }
 
+    /// <summary>
+    /// Converts the request to its raw format and awaits the corresponding response which is returned asynchronously.
+    /// The asynchronous task ends faulted if sending was not successful or a timeout occurs when waiting for the response.
+    /// Exceptions during conversion are thrown synchronously.
+    /// </summary>
     // TODO: return Task<TRsp?> here (requires language version 9.0+)
     public async Task<TTRsp> SendRequestAsync<TTRsp>(IRequest<TTRsp> request)
     {

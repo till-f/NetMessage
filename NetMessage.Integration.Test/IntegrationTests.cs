@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -76,7 +75,7 @@ namespace NetMessage.Integration.Test
     [TestMethod]
     public void TestSendMessages()
     {
-      int messageCount = 1000;
+      int messageCount = 2000;
       int receivedMessagesCount1 = 0;
       int receivedMessagesCount2 = 0;
       
@@ -141,7 +140,7 @@ namespace NetMessage.Integration.Test
 
     private void SendMessages(NetMessageClient client, int messageCount)
     {
-      var taskList = new List<Task<bool>>();
+      var taskList = new List<Task<int>>();
       for (int i = 0; i < messageCount; i++)
       {
         taskList.Add(client.SendMessageAsync(new TestMessage

@@ -137,7 +137,7 @@ namespace NetMessage.Base
     {
       Task.Run(() =>
       {
-        while (true)
+        while (!_cancellationTokenSource!.IsCancellationRequested)
         {
           TSession? session = null;
           try
@@ -148,7 +148,7 @@ namespace NetMessage.Base
             }
 
             var acceptTask = _socket.AcceptAsync();
-            acceptTask.Wait(_cancellationTokenSource!.Token);
+            acceptTask.Wait(_cancellationTokenSource.Token);
 
             if (!acceptTask.IsCompleted)
             {

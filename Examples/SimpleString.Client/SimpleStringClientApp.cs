@@ -78,7 +78,7 @@ namespace NetMessage.Examples.SimpleString.Client
     private static void OnRequestReceived(SimpleStringClient client, SimpleStringRequest request)
     {
       Console.WriteLine($"REQUEST RECEIVED: {request.Payload}");
-      request.RespondAsync("Yes, you are a nice server.");
+      request.SendResponseAsync("Yes, you are a nice server.");
     }
 
     private static void OnDisconnected(SimpleStringClient client)

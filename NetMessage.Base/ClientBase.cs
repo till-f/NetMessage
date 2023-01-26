@@ -10,8 +10,6 @@ namespace NetMessage.Base
     where TRequest : Request<TRequest, TProtocol, TPld>
     where TProtocol : class, IProtocol<TPld>
   {
-    private readonly QueuedLockProvider _connectLockProvider = new QueuedLockProvider();
-
     private Socket? _remoteSocket;
     private TProtocol? _protocolBuffer;
 
@@ -38,7 +36,7 @@ namespace NetMessage.Base
         try
         {
           // only one connection attempt at once
-          using (_connectLockProvider.GetLock())
+          lock (this)
           {
             if (IsConnected)
             {
@@ -58,7 +56,7 @@ namespace NetMessage.Base
               throw new InvalidOperationException("ConnectTask terminated abnormally");
             }
 
-            ReceiveAsync();
+            StartReceiveAsync();
 
             Connected?.Invoke((TClient)this);
 

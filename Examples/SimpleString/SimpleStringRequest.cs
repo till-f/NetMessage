@@ -13,7 +13,7 @@ namespace NetMessage.Examples.SimpleString
     {
     }
 
-    public Task<bool> RespondAsync(string response)
+    public Task<int> SendResponseAsync(string response)
     {
       return SendResponseInternalAsync(response);
     }

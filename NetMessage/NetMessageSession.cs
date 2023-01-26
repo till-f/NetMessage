@@ -7,7 +7,12 @@ namespace NetMessage
   {
     private IPayloadSerializer? _payloadConverter;
 
-    public Task<bool> SendMessageAsync(object message)
+    /// <summary>
+    /// Converts the message to its raw format and sends it to the remote socket.
+    /// Exceptions during conversion are thrown synchronously. The asynchronous send task returns
+    /// the number of bytes sent if successful, otherwise it completes with an invalid socket error.
+    /// </summary>
+    public Task<int> SendMessageAsync(object message)
     {
       string typeId = message.GetType().FullName;
       string serialized = _payloadConverter!.Serialize(message);

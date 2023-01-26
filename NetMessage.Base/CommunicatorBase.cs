@@ -12,7 +12,6 @@ namespace NetMessage.Base
     where TProtocol : class, IProtocol<TPld>
   {
     private readonly ConcurrentDictionary<int, ResponseEvent<TPld>> _responseEvents = new ConcurrentDictionary<int, ResponseEvent<TPld>>();
-    private readonly QueuedLockProvider _sendLockProvider = new QueuedLockProvider();
 
     private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
     private int _responseIdCounter;
@@ -86,6 +85,19 @@ namespace NetMessage.Base
     }
 
     /// <summary>
+    /// Converts the message to its raw format and sends it to the remote socket.
+    /// Exceptions during conversion are thrown synchronously. The asynchronous send task returns
+    /// the number of bytes sent if successful, otherwise it completes with an invalid socket error.
+    /// 
+    /// Protected because concrete implementations may prefer that this method is not exposed.
+    /// </summary>
+    protected Task<int> SendMessageInternalAsync(TPld messagePayload)
+    {
+      var rawData = ProtocolBuffer!.ToRawMessage(messagePayload);
+      return SendRawDataAsync(rawData);
+    }
+
+    /// <summary>
     /// Sends request to the remote socket and awaits the corresponding response.
     /// Protected because concrete implementations may prefer that this method is not exposed.
     /// </summary>
@@ -113,7 +125,7 @@ namespace NetMessage.Base
       _responseEvents[responseId] = responseEvent;
 
       var sendResult = await SendRawDataAsync(rawData);
-      if (!sendResult)
+      if (sendResult <= 0)
       {
         _responseEvents.TryRemove(responseId, out _);
 
@@ -137,32 +149,25 @@ namespace NetMessage.Base
       return responseEvent.Response;
     }
 
-    /// <summary>
-    /// Sends message to the remote socket.
-    /// Protected because concrete implementations may prefer that this method is not exposed.
-    /// </summary>
-    protected Task<bool> SendMessageInternalAsync(TPld messagePayload)
+    protected Task<int> SendRawDataAsync(byte[] rawData)
     {
-      try
+      if (!IsConnected)
       {
-        var rawData = ProtocolBuffer!.ToRawMessage(messagePayload);
-        return SendRawDataAsync(rawData);
+        throw new InvalidOperationException("Cannot send when not connected");
       }
-      catch (Exception ex)
-      {
-        NotifyError($"{ex.GetType().Name} while converting to raw format", ex);
-        return Task.FromResult(false);
-      }
+
+      var sendTask = RemoteSocket!.SendAsync(new ArraySegment<byte>(rawData), SocketFlags.None);
+      return sendTask;
     }
 
     /// <summary>
     /// Starts receiving messages from the remote socket.
     /// </summary>
-    protected Task ReceiveAsync()
+    protected void StartReceiveAsync()
     {
       var receiveTask = Task.Run(() =>
       {
-        while (true)
+        while (!CancellationToken.IsCancellationRequested)
         {
           try
           {
@@ -217,46 +222,9 @@ namespace NetMessage.Base
       }, CancellationToken);
 
       // The receive task is very robust and almost impossible to fail. Any exception is propagated via the OnError event.
-      // Only if an exception occurs inside an OnError handler, this exception would stop the receive thread more or less silently.
-      // To avoid this, we fail/crash the environment if the receive task faulted.
+      // Only if an exception occurs inside an OnError handler, this exception would stop the receive task more or less silently.
+      // To avoid this, we fail/crash the environment if the task faulted.
       receiveTask.ContinueWith(c => Environment.FailFast($"Receive task faulted: {c.Exception?.Message}", c.Exception), TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
-
-      return receiveTask;
-    }
-
-    protected Task<bool> SendRawDataAsync(byte[] rawData)
-    {
-      return Task.Run(() =>
-      {
-        // only one send request per communicator at once
-        using (_sendLockProvider.GetLock())
-        {
-          try
-          {
-            if (!IsConnected)
-            {
-              NotifyError("Cannot send to socket because it is not connected", null);
-              return false;
-            }
-
-            var sendTask = RemoteSocket!.SendAsync(new ArraySegment<byte>(rawData), SocketFlags.None);
-            sendTask.Wait(CancellationToken);
-
-            if (!sendTask.IsCompleted)
-            {
-              // should never occur
-              throw new InvalidOperationException("SendTask terminated abnormally");
-            }
-
-            return true;
-          }
-          catch (Exception ex)
-          {
-            HandleException(ex);
-            return false;
-          }
-        }
-      }, CancellationToken);
     }
 
     /// <summary>

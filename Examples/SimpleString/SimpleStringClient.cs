@@ -10,7 +10,7 @@ namespace NetMessage.Examples.SimpleString
   /// </summary>
   public class SimpleStringClient : ClientBase<SimpleStringClient, SimpleStringRequest, SimpleStringProtocol, string>
   {
-    public Task<bool> SendMessageAsync(string message)
+    public Task<int> SendMessageAsync(string message)
     {
       return SendMessageInternalAsync(message);
     }
