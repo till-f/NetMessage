@@ -17,6 +17,13 @@ namespace NetMessage.Base
     private int _responseIdCounter;
 
     /// <summary>
+    /// The time to wait for the response after sending a request before a TimeoutException is thrown.
+    /// Use a TimeSpan that represents -1 millisecond to wait indefinitely.
+    /// The default value is 10 seconds.
+    /// </summary>
+    public virtual TimeSpan ResponseTimeout { get; set; } = TimeSpan.FromSeconds(10);
+
+    /// <summary>
     /// Used to retrieve the remote socket.
     /// </summary>
     protected abstract Socket? RemoteSocket { get; }
@@ -136,7 +143,7 @@ namespace NetMessage.Base
         return null;
       }
 
-      var waitResponseResult = waitToken.Wait(TimeSpan.FromSeconds(10), CancellationToken);
+      var waitResponseResult = waitToken.Wait(ResponseTimeout, CancellationToken);
       if (!waitResponseResult)
       {
         if (!CancellationToken.IsCancellationRequested)

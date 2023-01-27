@@ -26,8 +26,7 @@ public class WeatherResponse
 ```
 
 *Instances of these classes are (de)serialized by the selected `IPayloadSerializer`. By default, the `XmlSerializer` from
-.NET is used. The payload serializer also defines the sequence terminating the message. The default terminator is "\u0004",
-i.e., the EOT (End Of Transmission) character.*
+.NET is used.*
 
 ### 3. Initialize and start server
 Create the server instance with the port number for listening and add handlers for events, messages and requests.
@@ -50,7 +49,7 @@ Don't forget to implement the corresponding handlers, for example:
 
 ```cs
 private static void WeatherRequestHandler(NetMessageSession session, 
-        TypedRequest<WeatherRequest, WeatherResponse> tr)
+                    TypedRequest<WeatherRequest, WeatherResponse> tr)
 {
   Console.WriteLine($"REQUEST: How is the wheater in {tr.Request.City}?");
   var response = new WeatherResponse { Forecast = "Sunny" };
@@ -69,7 +68,7 @@ client.OnError += OnError;
 client.Connected += OnConnected;
 client.Disconnected += OnDisconnected;
 
-// of course, our client can also receive communication that was initiated by the server
+// of course, our client could also listen for communication initiated by the server
 //client.AddMessageHandler<string>(StringMessageHandler);
 //client.AddRequestHandler<Request, RequestResponse>(RequestHandler);
 
@@ -118,6 +117,8 @@ Once connected, both the client and the server application can initiate sending 
 * `Task<bool> SendMessageAsync(object message)`
   * Note that a message can be of any type, but the receiver must have added a handler for the appropriate type to receive it.
 * `Task<TTRsp> SendRequestAsync<TTRsp>(IRequest<TTRsp> request)`
+  * The task provides access to the received response with the appropriate type. If no response was received before a given
+    timeout, a TimeoutException is thrown. The timeout value can be configured on the client or the server object.
   * Note that like for messages, the receiver must have added a handler for the appropriate type to receive the request.
 
 A response is sent by calling the following method diretly on the received `TypedRequest<TTPld, TTRsp>` object, which wraps
@@ -129,12 +130,15 @@ the original user request object of type `TTPld`:
 
 
 ## Extension
-*NetMessage* can be extended on two levels:
+If you want to use a custom protocol, but still want to take advantage of the event based notifications for messages, requests
+and responses, you will only need the *NetMessage.Base* NuGet package. The basic working principle described above is still valid,
+but the higher layer for transparent (de)serialization of C# objects will not be available.
 
-On the lower level, custom protocols (including binary protocols) can be implemented. See *SimpleString* in the
-[Examples](https://github.com/till-f/NetMessage/tree/main/Examples) folder, especially [SimpleStringProtocol.cs](Examples/SimpleString/SimpleStringProtocol.cs)
-for details. If you want to use a custom low-level protocol, you will only need the *NetMessage.Base* NuGet package and the
-typesafe layer in *NetMessage* will not be available.
+Using a custom protocol is as simple as implementing the `IProtocol` interface ([IProtocol.cs](NetMessage.Base/IProtocol.cs))
+and adding the corresponding concrete classes for the server, client and session. See the *SimpleString* Example in the
+[Examples](https://github.com/till-f/NetMessage/tree/main/Examples) folder for details.
 
-On the upper level, custom implementations can replace the default `XmlSerializer` that is used to (de)serialize the message
-objects. Take a look at [XmlPayloadSerializer.cs](NetMessage/XmlPayloadSerializer.cs) for details.
+If you just want to change the way how C# objects are (de)serialized, e.g. if you want to use Json instead of XML, all you have to do
+is implementing the `IPayloadSerializer` interface ([IPayloadSerializer.cs](NetMessage/IPayloadSerializer.cs)) and pass the
+corresponding instance to the `NetMessageServer` and `NetMessageClient` constructor respectively. Take a look at the existing
+implementation for XML in [XmlPayloadSerializer.cs](NetMessage/XmlPayloadSerializer.cs) if you need an example.

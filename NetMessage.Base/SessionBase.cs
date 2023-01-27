@@ -34,6 +34,22 @@ namespace NetMessage.Base
 
     public IPEndPoint? RemoteEndPoint { get; private set; }
 
+    public override TimeSpan ResponseTimeout
+    {
+      get => Server?.ResponseTimeout ?? base.ResponseTimeout;
+      set
+      {
+        if (Server != null)
+        {
+          Server.ResponseTimeout = value;
+        }
+        else
+        {
+          base.ResponseTimeout = value;
+        }
+      }
+    }
+
     protected override Socket? RemoteSocket => _remoteSocket;
 
     protected override TProtocol? ProtocolBuffer => _protocolBuffer;

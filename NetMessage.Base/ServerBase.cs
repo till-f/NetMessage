@@ -33,6 +33,12 @@ namespace NetMessage.Base
     }
 
     /// <summary>
+    /// The ResponseTimeout used for all sessions.
+    /// See <see cref="CommunicatorBase{TRequest, TProtocol, TPld}.ResponseTimeout"/>.
+    /// </summary>
+    public TimeSpan ResponseTimeout { get; set; }
+
+    /// <summary>
     /// Called to create a protocol buffer that is used exclusively for one session.
     /// The returned instance must not be used for other sessions.
     /// </summary>

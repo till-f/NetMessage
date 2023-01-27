@@ -111,9 +111,9 @@ namespace NetMessage.Examples.SimpleString
       return ToRaw(EMessageKind.Message, payload, -1);
     }
 
-    public byte[] ToRawRequest(string payload, int responseId)
+    public byte[] ToRawRequest(string payload, int requestId)
     {
-      return ToRaw(EMessageKind.Request, payload, responseId);
+      return ToRaw(EMessageKind.Request, payload, requestId);
     }
 
     public byte[] ToRawResponse(string payload, int responseId)
@@ -121,7 +121,7 @@ namespace NetMessage.Examples.SimpleString
       return ToRaw(EMessageKind.Response, payload, responseId);
     }
 
-    private byte[] ToRaw(EMessageKind messageKind, string payload, int responseId)
+    private byte[] ToRaw(EMessageKind messageKind, string payload, int id)
     {
       string messageKindToken;
       switch (messageKind)
@@ -139,7 +139,7 @@ namespace NetMessage.Examples.SimpleString
           throw new InvalidOperationException();
       }
 
-      var responseIdString = messageKind == EMessageKind.Message ? "" : responseId.ToString();
+      var responseIdString = messageKind == EMessageKind.Message ? "" : id.ToString();
 
       var sb = new StringBuilder();
       sb.Append(messageKindToken);
