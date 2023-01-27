@@ -9,145 +9,158 @@ namespace NetMessage.Integration.Test
   [TestClass]
   public class IntegrationTests : TestBase
   {
+    private const string ServerHost = "127.0.0.1";
+    private const int ServerPort = 1234;
+    private const int MessageCount = 2000;
+    private const int ClientCount = 2;
+
     private NetMessageServer? _server;
+    private readonly NetMessageClient[] _clients = new NetMessageClient[ClientCount];
+    private readonly NetMessageSession[] _sessions = new NetMessageSession[ClientCount];
+    private readonly int[] _receivedMessagesCount = new int[ClientCount];
+    private readonly WaitToken[] _messageReceivedWt = new WaitToken[ClientCount];
+
     private WaitToken? _sessionOpenedWt;
     private WaitToken? _sessionClosedWt;
-
     private NetMessageSession? _lastOpenedSession;
     private NetMessageSession? _lastClosedSession;
 
     [TestInitialize]
     public void TestInitialize()
     {
-      _server = new NetMessageServer(1234);
+      _server = new NetMessageServer(ServerPort);
       _server.OnError += OnServerError;
       _server.SessionOpened += OnSessionOpened;
       _server.SessionClosed += OnSessionClosed;
       _server.Start();
+
+      for (int i = 0; i < ClientCount; i++)
+      {
+        _clients[i] = new NetMessageClient();
+        _receivedMessagesCount[i] = 0;
+        _messageReceivedWt[i] = new WaitToken(MessageCount);
+
+        ConnectClient(i);
+      }
     }
 
     [TestCleanup]
     public void TestCleanup()
     {
+      for (int i = 0; i < ClientCount; i++)
+      {
+        _clients[i].Disconnect();
+      }
+
       _server!.Stop();
       _server!.Dispose();
     }
 
     [TestMethod]
-    public void TestConnectAndDisconnect()
+    public void ConnectOfConnectedClient()
     {
-      var client1 = new NetMessageClient();
-      var client2 = new NetMessageClient();
-
-      _sessionOpenedWt = new WaitToken(1);
-      var task = client1.ConnectAsync("127.0.0.1", 1234);
-      task.WaitAndAssert("Client 1 did not connect");
-      Assert.IsTrue(task.Result);
-      Assert.IsTrue(client1.IsConnected);
-      Assert.IsFalse(client2.IsConnected);
-      _sessionOpenedWt.WaitAndAssert("No session was opened after connection of client 1");
-      var session1 = _lastOpenedSession;
-
-      _sessionOpenedWt = new WaitToken(1);
-      task = client2.ConnectAsync("127.0.0.1", 1234);
-      task.WaitAndAssert("Client 2 did not connect");
-      Assert.IsTrue(task.Result);
-      Assert.IsTrue(client1.IsConnected);
-      Assert.IsTrue(client2.IsConnected);
-      _sessionOpenedWt.WaitAndAssert("No session was opened after connection of client 2");
-      var session2 = _lastOpenedSession;
-
-      _sessionClosedWt = new WaitToken(1);
-      client1.Disconnect();
-      Assert.IsFalse(client1.IsConnected);
-      Assert.IsTrue(client2.IsConnected);
-      _sessionClosedWt.WaitAndAssert("Session was not closed after disconnection of client 1");
-      Assert.AreEqual(session1, _lastClosedSession);
-
-      _sessionClosedWt = new WaitToken(1);
-      client2.Disconnect();
-      Assert.IsFalse(client1.IsConnected);
-      Assert.IsFalse(client2.IsConnected);
-      _sessionClosedWt.WaitAndAssert("Session was not closed after disconnection of client 2");
-      Assert.AreEqual(session2, _lastClosedSession);
+      var task = _clients[0].ConnectAsync(ServerHost, ServerPort);
+      task.WaitAndAssert("Connect task did not succeed");
+      Assert.IsFalse(task.Result, "Connecting of already connected client did not return false");
     }
 
     [TestMethod]
-    public void TestSendMessages()
+    public void ConnectAndDisconnect()
     {
-      int messageCount = 2000;
-      int receivedMessagesCount1 = 0;
-      int receivedMessagesCount2 = 0;
-      
-      var client1 = new NetMessageClient();
-      var client2 = new NetMessageClient();
-      var messageReceivedWt1 = new WaitToken(messageCount);
-      var messageReceivedWt2 = new WaitToken(messageCount);
+      Assert.IsTrue(_clients[0].IsConnected);
+      Assert.IsTrue(_clients[1].IsConnected);
 
-      _sessionOpenedWt = new WaitToken(1);
-      var connectTask = client1.ConnectAsync("127.0.0.1", 1234);
-      connectTask.WaitAndAssert("Client 1 did not connect");
-      _sessionOpenedWt.WaitAndAssert("No session was opened after connection of client 1");
-      var session1 = _lastOpenedSession;
+      _sessionClosedWt = new WaitToken(1);
+      _clients[0].Disconnect();
+      Assert.IsFalse(_clients[0].IsConnected);
+      Assert.IsTrue(_clients[1].IsConnected);
+      _sessionClosedWt.WaitAndAssert("Session was not closed after disconnection of client 0");
+      Assert.AreEqual(_sessions[0], _lastClosedSession);
 
-      _sessionOpenedWt = new WaitToken(1);
-      connectTask = client2.ConnectAsync("127.0.0.1", 1234);
-      connectTask.WaitAndAssert("Client 2 did not connect");
-      _sessionOpenedWt.WaitAndAssert("No session was opened after connection of client 2");
-      var session2 = _lastOpenedSession;
+      _sessionClosedWt = new WaitToken(1);
+      _clients[1].Disconnect();
+      Assert.IsFalse(_clients[0].IsConnected);
+      Assert.IsFalse(_clients[1].IsConnected);
+      _sessionClosedWt.WaitAndAssert("Session was not closed after disconnection of client 1");
+      Assert.AreEqual(_sessions[1], _lastClosedSession);
+    }
 
+    [TestMethod]
+    public void SendMessagesToServer()
+    {
       _server!.AddMessageHandler<TestMessage>(OnMessageReceived);
 
-      var sendTask1 = Task.Run(() => SendMessages(client1, messageCount));
-      var sendTask2 = Task.Run(() => SendMessages(client2, messageCount));
+      var sendTask0 = Task.Run(() => SendMessages(_clients[0]));
+      var sendTask1 = Task.Run(() => SendMessages(_clients[1]));
 
+      sendTask0.WaitAndAssert("Send task 0 did not finish");
       sendTask1.WaitAndAssert("Send task 1 did not finish");
-      sendTask2.WaitAndAssert("Send task 2 did not finish");
 
-      messageReceivedWt1.WaitAndAssert("Not all messages from client 1 were received");
-      messageReceivedWt2.WaitAndAssert("Not all messages from client 2 were received");
+      _messageReceivedWt[0].WaitAndAssert("Not all messages from client 0 were received");
+      _messageReceivedWt[1].WaitAndAssert("Not all messages from client 1 were received");
+    }
 
-      client1.Disconnect();
-      client2.Disconnect();
+    [TestMethod]
+    public void SendMessagesToClients()
+    {
+      _clients[0].AddMessageHandler<TestMessage>(OnMessageReceived);
+      _clients[1].AddMessageHandler<TestMessage>(OnMessageReceived);
 
-      void OnMessageReceived(NetMessageSession session, TestMessage message)
+      var sendTask0 = Task.Run(() => SendMessages(_sessions[0]));
+      var sendTask1 = Task.Run(() => SendMessages(_sessions[1]));
+
+      sendTask0.WaitAndAssert("Send task 0 did not finish");
+      sendTask1.WaitAndAssert("Send task 1 did not finish");
+
+      _messageReceivedWt[0].WaitAndAssert("Not all messages from client 0 were received");
+      _messageReceivedWt[1].WaitAndAssert("Not all messages from client 1 were received");
+    }
+
+    private void ConnectClient(int clientIndex)
+    {
+      _sessionOpenedWt = new WaitToken(1);
+      var task = _clients[clientIndex].ConnectAsync(ServerHost, ServerPort);
+      task.WaitAndAssert($"Client {clientIndex} did not connect");
+      Assert.IsTrue(task.Result);
+      Assert.IsTrue(_clients[clientIndex].IsConnected);
+      _sessionOpenedWt.WaitAndAssert($"No session was opened after connection of client {clientIndex}");
+
+      if (_lastOpenedSession == null)
       {
-        Assert.AreEqual(message.MessageText, "MyMessage");
+        throw new AssertFailedException("Last opened session memento was null after connection");
+      }
 
-        int expectedCount = -1;
-        if (session == session1)
+      _sessions[clientIndex] = _lastOpenedSession;
+    }
+
+    private void SendMessages(object communicator)
+    {
+      var taskList = new List<Task<int>>();
+      for (int i = 0; i < MessageCount; i++)
+      {
+        Task<int> sendTask;
+        if (communicator is NetMessageClient client)
         {
-          TestContext!.WriteLine($"Received on session 1: {message.MessageCount}");
-
-          expectedCount = receivedMessagesCount1++;
-          messageReceivedWt1.Signal();
+          sendTask = client.SendMessageAsync(new TestMessage
+          {
+            MessageText = "MyMessage",
+            MessageCount = i
+          });
         }
-        else if (session == session2)
+        else if (communicator is NetMessageSession session)
         {
-          TestContext!.WriteLine($"Received on session 2: {message.MessageCount}");
-
-          expectedCount = receivedMessagesCount2++;
-          messageReceivedWt2.Signal();
+          sendTask = session.SendMessageAsync(new TestMessage
+          {
+            MessageText = "MyMessage",
+            MessageCount = i
+          });
         }
         else
         {
-          Assert.Fail($"Message received from unexpected session: {session.Guid}");
+          throw new AssertFailedException($"Send request from unexpected communicator: {communicator}");
         }
 
-        Assert.AreEqual(expectedCount, message.MessageCount);
-      }
-    }
-
-    private void SendMessages(NetMessageClient client, int messageCount)
-    {
-      var taskList = new List<Task<int>>();
-      for (int i = 0; i < messageCount; i++)
-      {
-        taskList.Add(client.SendMessageAsync(new TestMessage
-        {
-          MessageText = "MyMessage",
-          MessageCount = i
-        }));
+        taskList.Add(sendTask);
       }
 
       foreach (var task in taskList)
@@ -156,6 +169,32 @@ namespace NetMessage.Integration.Test
       }
     }
 
+    private void OnMessageReceived(object communicator, TestMessage message)
+    {
+      Assert.AreEqual(message.MessageText, "MyMessage");
+
+      var communicatorIndex = -1;
+      if (communicator is NetMessageClient client)
+      {
+        communicatorIndex = Array.IndexOf(_clients, client);
+      }
+      else if (communicator is NetMessageSession session)
+      {
+        communicatorIndex = Array.IndexOf(_sessions, session);
+      }
+
+      if (communicatorIndex < 0)
+      {
+        throw new AssertFailedException($"Message received from unexpected communicator: {communicator}");
+      }
+
+      TestContext!.WriteLine($"Received Message on {communicator.GetType().Name} {communicatorIndex}: {message.MessageCount}");
+
+      var expectedCount = _receivedMessagesCount[communicatorIndex]++;
+      Assert.AreEqual(expectedCount, message.MessageCount);
+      _messageReceivedWt[communicatorIndex].Signal();
+    }
+    
     private void OnServerError(NetMessageServer server, NetMessageSession? session, string errorMessage, Exception? ex)
     {
       TestContext!.WriteLine($"Server error: {errorMessage}");
