@@ -7,6 +7,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetMessage.Base", "NetMessa
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetMessage", "NetMessage\NetMessage.csproj", "{82F3A2E9-A0F1-4B4F-A633-9194846B2F42}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{261D6D93-9891-441B-A8F9-586B587B8EDB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetMessage.Integration.Test", "Tests\NetMessage.Integration.Test.csproj", "{5BB52A51-0FA1-492F-8EEA-8435610E0D3B}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{53939F01-323F-40AC-896F-F50DD1BA9227}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SimpleString", "SimpleString", "{28D5EE90-461A-478D-B6FB-0005BB77DBF5}"
@@ -33,10 +37,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_Solution", "_Solution", "{
 		Pipeline.yml = Pipeline.yml
 		README.md = README.md
 	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{261D6D93-9891-441B-A8F9-586B587B8EDB}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetMessage.Integration.Test", "NetMessage.Integration.Test\NetMessage.Integration.Test.csproj", "{5BB52A51-0FA1-492F-8EEA-8435610E0D3B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

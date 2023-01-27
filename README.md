@@ -2,7 +2,8 @@
 **Typesafe and lightweight RPC for .NET**
 
 *NetMessage* is a small, super easy to use RPC and messaging library. The `NetMessageClient` and `NetMessageServer` classes
-provide typesafe communication for any kind of .NET application. The message data types are defined by arbitrary C# classes.
+provide typesafe communication for any kind of .NET application. All message types are defined by plain C# classes. No messing
+around with configuration files or external tools. And absolutely no additional dependencies.
 
 ## Quickstart
 
@@ -142,3 +143,6 @@ If you just want to change the way how C# objects are (de)serialized, e.g. if yo
 is implementing the `IPayloadSerializer` interface ([IPayloadSerializer.cs](NetMessage/IPayloadSerializer.cs)) and pass the
 corresponding instance to the `NetMessageServer` and `NetMessageClient` constructor respectively. Take a look at the existing
 implementation for XML in [XmlPayloadSerializer.cs](NetMessage/XmlPayloadSerializer.cs) if you need an example.
+
+## Tests
+There is small but strong collection of integration tests, see [here](https://github.com/till-f/NetMessage/tree/main/Tests).
