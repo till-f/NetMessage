@@ -1,6 +1,9 @@
 <Project>
   <PropertyGroup>
+    <Nullable>enable</Nullable>
+	<LangVersion>8.0</LangVersion>
     <VersionPrefix>0.1.0</VersionPrefix>
+    <VersionSuffix>local</VersionSuffix>
     <Authors>Till Fischer</Authors>
     <Description>Typesafe and lightweight RPC for .NET</Description>
     <Copyright>(c) 2023</Copyright>

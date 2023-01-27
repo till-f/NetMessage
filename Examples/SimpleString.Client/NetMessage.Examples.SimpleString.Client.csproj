@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-    <Nullable>enable</Nullable>
     <RootNamespace>NetMessage.Examples.SimpleString.Client</RootNamespace>
     <AssemblyName>NetMessage.Examples.SimpleString.Client</AssemblyName>
     <OutputType>Exe</OutputType>

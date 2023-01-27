@@ -1,4 +1,4 @@
-name: $(Date:yy)$(DayOfYear)-r$(Rev:rr)
+name: b$(Date:yy)$(DayOfYear)r$(Rev:rr)
 
 trigger:
 - main
