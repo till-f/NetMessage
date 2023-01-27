@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace NetMessage.Base
 {
-  public abstract class CommunicatorBase<TRequest, TProtocol, TPld>
+  public abstract class CommunicatorBase<TRequest, TProtocol, TPld> : IDisposable
     where TRequest : Request<TRequest, TProtocol, TPld>
     where TProtocol : class, IProtocol<TPld>
   {
@@ -264,6 +264,11 @@ namespace NetMessage.Base
       }
 
       return false;
+    }
+
+    public void Dispose()
+    {
+      Close();
     }
   }
 }

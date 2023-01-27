@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace NetMessage.Base
 {
-  public abstract class ClientBase<TClient, TRequest, TProtocol, TPld> : CommunicatorBase<TRequest, TProtocol, TPld>, IDisposable
+  public abstract class ClientBase<TClient, TRequest, TProtocol, TPld> : CommunicatorBase<TRequest, TProtocol, TPld>
     where TClient : ClientBase<TClient, TRequest, TProtocol, TPld>
     where TRequest : Request<TRequest, TProtocol, TPld>
     where TProtocol : class, IProtocol<TPld>
@@ -101,11 +101,6 @@ namespace NetMessage.Base
     protected override void NotifyError(string errorMessage, Exception? exception)
     {
       OnError?.Invoke((TClient)this, errorMessage, exception);
-    }
-
-    public void Dispose()
-    {
-      Close();
     }
   }
 }
