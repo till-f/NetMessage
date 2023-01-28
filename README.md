@@ -23,7 +23,7 @@ public class WeatherRequest : IRequest<WeatherResponse>
 public class WeatherResponse
 {
   public string Forecast { get; set; }
-}
+} 
 ```
 
 *Instances of these classes are (de)serialized by the selected `IPayloadSerializer`. By default, the `XmlSerializer` from
