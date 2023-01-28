@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="..\README.NuGet.md" Link="README.NuGet.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\NetMessage.Base\NetMessage.Base.csproj" />
   </ItemGroup>
 
