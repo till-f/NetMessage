@@ -1,4 +1,4 @@
-name: b$(Date:yy)$(DayOfYear)r$(Rev:rr)
+name: 1.0.0.$(Rev:r)
 
 trigger:
 - main
@@ -11,38 +11,54 @@ variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
+  ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+    versionSuffix: ''
+  ${{ else }}:
+    versionSuffix: 'prerelease'
 
 steps:
 - task: NuGetToolInstaller@1
-
+  displayName: 'Install NuGet'
+  
 - task: NuGetCommand@2
+  displayName: 'NuGet Restore'
   inputs:
     restoreSolution: '$(solution)'
-  enabled: false
 
 - task: VSBuild@1
+  displayName: 'Build'
   inputs:
     solution: '$(solution)'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
-    msbuildArgs: '/p:VersionSuffix=$(Build.BuildNumber)'
+    msbuildArgs: '/p:VersionPrefix=$(Build.BuildNumber) /p:VersionSuffix=$(versionSuffix)'
 
 - task: VSTest@2
+  displayName: 'Test'
   inputs:
     testAssemblyVer2: |-
       **\*Test.dll
       !**\obj\**
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
-  enabled: false
 
 - task: CopyFiles@2
+  displayName: 'Copy Artifacts'
   inputs:
-    SourceFolder: '$(Build.SourcesDirectory)'
-    Contents: 'NetMessage*\bin\Release\*.nupkg'
-    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+    sourceFolder: '$(Build.SourcesDirectory)'
+    contents: '**\bin\Release\*.nupkg'
+    targetFolder: '$(Build.ArtifactStagingDirectory)'
+    flattenFolders: true
 
 - task: PublishPipelineArtifact@1
+  displayName: 'Publish Packages'
   inputs:
-    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
-    artifactName: 'NetMessage-$(Build.BuildNumber)'
+    targetPath: '$(Build.ArtifactStagingDirectory)'
+    artifactName: 'Packages'
+
+- task: PublishPipelineArtifact@1
+  displayName: 'Publish TestResults'
+  inputs:
+    targetPath: '$(Pipeline.Workspace)\TestResults'
+    artifactName: 'TestResults'
+  condition: succeededOrFailed()
