@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.32901.82
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32126.317
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetMessage.Base", "NetMessage.Base\NetMessage.Base.csproj", "{9E360813-E8B9-4FE1-9315-6224C8A841A4}"
 EndProject
@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetMessage", "NetMessage\Ne
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{261D6D93-9891-441B-A8F9-586B587B8EDB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetMessage.Integration.Test", "Tests\NetMessage.Integration.Test.csproj", "{5BB52A51-0FA1-492F-8EEA-8435610E0D3B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetMessage.Integration.Test", "Tests\NetMessage.Integration.Test.csproj", "{5BB52A51-0FA1-492F-8EEA-8435610E0D3B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{53939F01-323F-40AC-896F-F50DD1BA9227}"
 EndProject
@@ -36,6 +36,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_Solution", "_Solution", "{
 		LICENSE = LICENSE
 		Pipeline.yml = Pipeline.yml
 		README.md = README.md
+		README.NuGet.md = README.NuGet.md
 	EndProjectSection
 EndProject
 Global
@@ -52,6 +53,10 @@ Global
 		{82F3A2E9-A0F1-4B4F-A633-9194846B2F42}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{82F3A2E9-A0F1-4B4F-A633-9194846B2F42}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{82F3A2E9-A0F1-4B4F-A633-9194846B2F42}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5BB52A51-0FA1-492F-8EEA-8435610E0D3B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5BB52A51-0FA1-492F-8EEA-8435610E0D3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5BB52A51-0FA1-492F-8EEA-8435610E0D3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5BB52A51-0FA1-492F-8EEA-8435610E0D3B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A4817567-07A3-44F9-A259-2EFCB43201A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A4817567-07A3-44F9-A259-2EFCB43201A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A4817567-07A3-44F9-A259-2EFCB43201A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -76,15 +81,12 @@ Global
 		{70F67525-173C-4E06-AD2D-F7992CADEA46}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{70F67525-173C-4E06-AD2D-F7992CADEA46}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{70F67525-173C-4E06-AD2D-F7992CADEA46}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5BB52A51-0FA1-492F-8EEA-8435610E0D3B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5BB52A51-0FA1-492F-8EEA-8435610E0D3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5BB52A51-0FA1-492F-8EEA-8435610E0D3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5BB52A51-0FA1-492F-8EEA-8435610E0D3B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{5BB52A51-0FA1-492F-8EEA-8435610E0D3B} = {261D6D93-9891-441B-A8F9-586B587B8EDB}
 		{28D5EE90-461A-478D-B6FB-0005BB77DBF5} = {53939F01-323F-40AC-896F-F50DD1BA9227}
 		{0596C0DE-663B-4C01-BB6A-A43163FB2953} = {53939F01-323F-40AC-896F-F50DD1BA9227}
 		{A4817567-07A3-44F9-A259-2EFCB43201A8} = {28D5EE90-461A-478D-B6FB-0005BB77DBF5}
@@ -93,7 +95,6 @@ Global
 		{FECC4D95-D780-464E-8BC2-F48990015E05} = {0596C0DE-663B-4C01-BB6A-A43163FB2953}
 		{D32429B9-514A-44CE-813A-B29DF51D4A4E} = {0596C0DE-663B-4C01-BB6A-A43163FB2953}
 		{70F67525-173C-4E06-AD2D-F7992CADEA46} = {0596C0DE-663B-4C01-BB6A-A43163FB2953}
-		{5BB52A51-0FA1-492F-8EEA-8435610E0D3B} = {261D6D93-9891-441B-A8F9-586B587B8EDB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9914BA43-9EBD-4411-BD64-BF92E2251E64}

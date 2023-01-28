@@ -10,7 +10,7 @@ configuration files, no external tools and no additional dependencies.
 ## Quickstart
 
 ### 1. Download
-Get *NetMessage* from [NuGet](https://www.nuget.org "TODO: insert deep link here").
+Get *NetMessage* from [NuGet](https://www.nuget.org/packages/NetMessage/ "NetMessage on NuGet.org").
 
 ### 2. Define Data Types
 Create the message, request and response types, for example:
