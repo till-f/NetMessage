@@ -37,9 +37,9 @@ namespace NetMessage.Examples.SimpleString
     /// </summary>
     public string Terminator { get; set; } = "\u0004";
 
-    public IList<IMessage<string>> FromRaw(byte[] rawData)
+    public IList<IPacket<string>> FromRaw(byte[] rawData)
     {
-      var messages = new List<IMessage<string>>();
+      var messages = new List<IPacket<string>>();
 
       var text = Encoding.GetString(rawData);
 
@@ -65,7 +65,7 @@ namespace NetMessage.Examples.SimpleString
       return messages;
     }
 
-    private IMessage<string> ParseMessage(string rawString)
+    private IPacket<string> ParseMessage(string rawString)
     {
       EMessageKind messageKind;
       switch (rawString[0])

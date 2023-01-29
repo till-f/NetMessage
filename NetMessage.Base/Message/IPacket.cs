@@ -1,6 +1,6 @@
 ﻿namespace NetMessage.Base.Message
 {
-  public interface IMessage<TPld>
+  public interface IPacket<TPld>
   {
     TPld Payload { get; }
   }

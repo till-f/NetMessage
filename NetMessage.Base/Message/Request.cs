@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace NetMessage.Base.Message
 {
-  public abstract class Request<TRequest, TProtocol, TPld> : IMessage<TPld>
+  public abstract class Request<TRequest, TProtocol, TPld> : IPacket<TPld>
     where TRequest : Request<TRequest, TProtocol, TPld>
     where TProtocol : class, IProtocol<TPld>
   {

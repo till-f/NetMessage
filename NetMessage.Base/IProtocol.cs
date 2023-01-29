@@ -15,18 +15,18 @@ namespace NetMessage.Base
     /// <see cref="CommunicatorBase{TRequest, TProtocol, TPld}.SendRequestInternalAsync(TPld)"/>
     /// 
     /// The implementation must use an internal buffer to store the data
-    /// that cannot be processed yet (e.g. an incompletely received message)
+    /// that cannot be processed yet (e.g. an incompletely received packets)
     /// so that is ready to be consued when the next chunk of data arrives.
     /// </summary>
-    IList<IMessage<TPld>> FromRaw(byte[] rawData);
+    IList<IPacket<TPld>> FromRaw(byte[] rawData);
 
     /// <summary>
-    /// Converts the message object to the raw message format.
+    /// Converts a message object to the raw message format.
     /// </summary>
     byte[] ToRawMessage(TPld payload);
 
     /// <summary>
-    /// Converts the request object to the raw request format.
+    /// Converts a request object to the raw request format.
     /// 
     /// If the protocol does not support the request/response mechanism,
     /// the client and server implementation must not expose this method:
@@ -35,7 +35,7 @@ namespace NetMessage.Base
     byte[] ToRawRequest(TPld payload, int requestId);
 
     /// <summary>
-    /// Converts the response object to the raw response format.
+    /// Converts a response object to the raw response format.
     /// 
     /// If the protocol does not support the request/response mechanism,
     /// the client and server implementation must not expose this method:

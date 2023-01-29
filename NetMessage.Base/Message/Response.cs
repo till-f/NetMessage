@@ -2,7 +2,7 @@
 {
   public enum EMessageKind { Message, Request, Response }
 
-  public class Response<TPld> : IMessage<TPld>
+  public class Response<TPld> : IPacket<TPld>
   {
     /// <summary>
     /// Container for a response (in contrast to message and request)

@@ -40,9 +40,9 @@ namespace NetMessage
     /// </summary>
     public string Terminator { get; set; } = DefaultTerminator;
 
-    public IList<IMessage<TypedPayload>> FromRaw(byte[] rawData)
+    public IList<IPacket<TypedPayload>> FromRaw(byte[] rawData)
     {
-      var messages = new List<IMessage<TypedPayload>>();
+      var messages = new List<IPacket<TypedPayload>>();
 
       var text = Encoding.GetString(rawData);
 
@@ -68,7 +68,7 @@ namespace NetMessage
       return messages;
     }
 
-    private IMessage<TypedPayload> ParseMessage(string rawString)
+    private IPacket<TypedPayload> ParseMessage(string rawString)
     {
       EMessageKind messageKind;
       switch (rawString[0])
