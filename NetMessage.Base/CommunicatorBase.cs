@@ -21,7 +21,7 @@ namespace NetMessage.Base
     /// Use a TimeSpan that represents -1 millisecond to wait indefinitely.
     /// The default value is 10 seconds.
     /// </summary>
-    public virtual TimeSpan ResponseTimeout { get; set; } = TimeSpan.FromSeconds(10);
+    public virtual TimeSpan ResponseTimeout { get; set; } = Defaults.ResponseTimeout;
 
     /// <summary>
     /// Used to retrieve the remote socket.
