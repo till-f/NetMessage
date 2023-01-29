@@ -160,7 +160,7 @@ namespace NetMessage.Integration.Test
     }
 
     [TestMethod]
-    public void SendMessagesToServer()
+    public void FloodServerCuncurrent()
     {
       _server!.AddMessageHandler<TestMessage>(OnMessageReceived);
 
@@ -175,7 +175,7 @@ namespace NetMessage.Integration.Test
     }
 
     [TestMethod]
-    public void SendMessagesToClients()
+    public void FloodClientsConcurrent()
     {
       _clients[0].AddMessageHandler<TestMessage>(OnMessageReceived);
       _clients[1].AddMessageHandler<TestMessage>(OnMessageReceived);
