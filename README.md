@@ -1,12 +1,14 @@
 # NetMessage<br>
-[![NuGet version (NetMessage)](https://img.shields.io/nuget/v/NetMessage.svg?style=flat-square)](https://www.nuget.org/packages/NetMessage/)
-[![Build Status](https://tsharpsoftware.visualstudio.com/NetMessage/_apis/build/status/till-f.NetMessage?branchName=main)](https://tsharpsoftware.visualstudio.com/NetMessage/_build/latest?definitionId=1&branchName=main)
-
 **Typesafe and lightweight RPC for .NET**
 
 *NetMessage* is a small, super easy to use RPC and messaging library. The `NetMessageClient` and `NetMessageServer` classes
 provide typesafe communication for any kind of .NET application. All message types are defined by plain C# classes. No
 configuration files, no external tools and no additional dependencies.
+
+|NetMessage     |[![NuGet version (NetMessage)](https://img.shields.io/nuget/v/NetMessage.svg?style=flat)](https://www.nuget.org/packages/NetMessage/)|
+|:--------------|:-|
+|NetMessage.Base|[![NuGet version (NetMessage.Base)](https://img.shields.io/nuget/v/NetMessage.Base.svg?style=flat)](https://www.nuget.org/packages/NetMessage.Base/)|
+|Pipeline       |[![Build Status](https://tsharpsoftware.visualstudio.com/NetMessage/_apis/build/status/till-f.NetMessage?branchName=main)](https://tsharpsoftware.visualstudio.com/NetMessage/_build/latest?definitionId=1&branchName=main)|
 
 ## Quickstart
 
