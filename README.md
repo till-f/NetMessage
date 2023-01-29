@@ -109,10 +109,10 @@ Three basic message kinds can be distinguished:
 The client or server application can register on the `NetMessageClient` or `NetMessageServer` class to be notified when
 a message or request *with a specific type* is received:
 
-* `void AddMessageHandler<TTPld>(Action<NetMessageClient, TTPld> messageHandler)`
-  * Where `TTPld` is the expected message type without constraints.
-* `void AddRequestHandler<TTPld, TTRsp>(Action<NetMessageClient, TypedRequest<TTPld, TTRsp>> requestHandler)`
-  * Where `TTPld` is the expected request type and must derive `IRequest<TTRsp>`. `TTRsp` is the expected response type without 
+* `void AddMessageHandler<TTData>(Action<NetMessageClient, TTData> messageHandler)`
+  * Where `TTData` is the expected message type without constraints.
+* `void AddRequestHandler<TTData, TTRsp>(Action<NetMessageClient, TypedRequest<TTData, TTRsp>> requestHandler)`
+  * Where `TTData` is the expected request type and must derive `IRequest<TTRsp>`. `TTRsp` is the expected response type without 
     constraints. The `IRequest` interface is otherwise empty.
 
 Once connected, both the client and the server application can initiate sending of messages or requests on the
@@ -125,8 +125,8 @@ Once connected, both the client and the server application can initiate sending 
     timeout, a TimeoutException is thrown. The timeout value can be configured on the client or the server object.
   * Note that like for messages, the receiver must have added a handler for the appropriate type to receive the request.
 
-A response is sent by calling the following method diretly on the received `TypedRequest<TTPld, TTRsp>` object, which wraps
-the original user request object of type `TTPld`:
+A response is sent by calling the following method diretly on the received `TypedRequest<TTData, TTRsp>` object, which wraps
+the original user request object of type `TTData`:
 
 * `Task<bool> SendResponseAsync(TTRsp response)`
   * The type of the response is constrained by the received request. The sender of the request is notified transparently,

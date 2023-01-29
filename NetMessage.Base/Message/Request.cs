@@ -3,24 +3,24 @@ using System.Threading.Tasks;
 
 namespace NetMessage.Base.Message
 {
-  public abstract class Request<TRequest, TProtocol, TPld> : IPacket<TPld>
-    where TRequest : Request<TRequest, TProtocol, TPld>
-    where TProtocol : class, IProtocol<TPld>
+  public abstract class Request<TRequest, TProtocol, TData> : IPacket<TData>
+    where TRequest : Request<TRequest, TProtocol, TData>
+    where TProtocol : class, IProtocol<TData>
   {
-    private Func<TPld, int, byte[]>? _toRawResponse;
+    private Func<TData, int, byte[]>? _toRawResponse;
     private Func<byte[], Task<int>>? _sendRawData;
     private Action<string, Exception?>? _notifyError;
 
     /// <summary>
     /// Container for a response (in contrast to message and request)
     /// </summary>
-    protected Request(TPld payload, int requestId)
+    protected Request(TData payload, int requestId)
     {
       Payload = payload;
       RequestId = requestId;
     }
 
-    public TPld Payload { get; }
+    public TData Payload { get; }
 
     public int RequestId { get; }
 
@@ -31,7 +31,7 @@ namespace NetMessage.Base.Message
     /// 
     /// Protected because concrete implementations may prefer that this method is not exposed.
     /// </summary>
-    protected Task<int> SendResponseInternalAsync(TPld response)
+    protected Task<int> SendResponseInternalAsync(TData response)
     {
       try
       {
@@ -45,7 +45,7 @@ namespace NetMessage.Base.Message
       }
     }
 
-    public void SetContext(Func<TPld, int, byte[]> toRawResponse, Func<byte[], Task<int>> sendRawData, Action<string, Exception?> notifyError)
+    public void SetContext(Func<TData, int, byte[]> toRawResponse, Func<byte[], Task<int>> sendRawData, Action<string, Exception?> notifyError)
     {
       _toRawResponse = toRawResponse;
       _sendRawData = sendRawData;

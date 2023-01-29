@@ -34,26 +34,26 @@ namespace NetMessage
   /// Internal helper to deserialize received messages from the protocol layer and
   /// forwards them to the properly typed message handler.
   /// </summary>
-  public class TypedMessageHandler<TCommunicator, TRequest, TProtocol, TTPld> : TypedMessageHandler<TCommunicator, TRequest, TProtocol>
+  public class TypedMessageHandler<TCommunicator, TRequest, TProtocol, TTData> : TypedMessageHandler<TCommunicator, TRequest, TProtocol>
     where TCommunicator : CommunicatorBase<TRequest, TProtocol, TypedPayload>
     where TRequest : Request<TRequest, TProtocol, TypedPayload>
     where TProtocol : class, IProtocol<TypedPayload>
   {
-    public TypedMessageHandler(IPayloadSerializer payloadConverter, Action<TCommunicator, TTPld> messageHandler) : base (payloadConverter)
+    public TypedMessageHandler(IPayloadSerializer payloadConverter, Action<TCommunicator, TTData> messageHandler) : base (payloadConverter)
     {
       MessageHandler = messageHandler;
     }
 
-    public Action<TCommunicator, TTPld> MessageHandler { get; }
+    public Action<TCommunicator, TTData> MessageHandler { get; }
 
     public override object UserHandler => MessageHandler;
 
     public override void InvokeMessageHandler(TCommunicator communicator, Message<TypedPayload> message)
     {
-      var instance = PayloadConverter.Deserialize<TTPld>(message.Payload.ActualPayload);
+      var instance = PayloadConverter.Deserialize<TTData>(message.Payload.ActualPayload);
       if (instance == null)
       {
-        throw new InvalidOperationException($"Could not create instance of type {typeof(TTPld)}");
+        throw new InvalidOperationException($"Could not create instance of type {typeof(TTData)}");
       }
       MessageHandler.Invoke(communicator, instance);
     }
@@ -77,29 +77,29 @@ namespace NetMessage
   /// Internal helper to deserialize received requests from the protocol layer and
   /// forwards them to the properly typed request handler.
   /// </summary>
-  public class TypedRequestHandler<TCommunicator, TRequest, TProtocol, TTPld, TTRsp> : TypedRequestHandler<TCommunicator, TRequest, TProtocol>
+  public class TypedRequestHandler<TCommunicator, TRequest, TProtocol, TTData, TTRsp> : TypedRequestHandler<TCommunicator, TRequest, TProtocol>
     where TCommunicator : CommunicatorBase<TRequest, TProtocol, TypedPayload>
     where TRequest : Request<TRequest, TProtocol, TypedPayload>
     where TProtocol : class, IProtocol<TypedPayload>
-    where TTPld : IRequest<TTRsp>
+    where TTData : IRequest<TTRsp>
   {
-    public TypedRequestHandler(IPayloadSerializer payloadConverter, Action<TCommunicator, TypedRequest<TTPld, TTRsp>> requestHandler) : base(payloadConverter)
+    public TypedRequestHandler(IPayloadSerializer payloadConverter, Action<TCommunicator, TypedRequest<TTData, TTRsp>> requestHandler) : base(payloadConverter)
     {
       RequestHandler = requestHandler;
     }
 
-    public Action<TCommunicator, TypedRequest<TTPld, TTRsp>> RequestHandler { get; }
+    public Action<TCommunicator, TypedRequest<TTData, TTRsp>> RequestHandler { get; }
 
     public override object UserHandler => RequestHandler;
 
     public override void InvokeRequestHandler(TCommunicator communicator, TypedRequestInternal request)
     {
-      var instance = PayloadConverter.Deserialize<TTPld>(request.Payload.ActualPayload);
+      var instance = PayloadConverter.Deserialize<TTData>(request.Payload.ActualPayload);
       if (instance == null)
       {
-        throw new InvalidOperationException($"Could not create instance of type {typeof(TTPld)}");
+        throw new InvalidOperationException($"Could not create instance of type {typeof(TTData)}");
       }
-      var deserializedRequest = new TypedRequest<TTPld, TTRsp>(PayloadConverter, request, instance);
+      var deserializedRequest = new TypedRequest<TTData, TTRsp>(PayloadConverter, request, instance);
       RequestHandler.Invoke(communicator, deserializedRequest);
     }
   }

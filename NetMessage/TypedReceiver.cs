@@ -25,28 +25,28 @@ namespace NetMessage
       _payloadConverter = payloadConverter;
     }
 
-    public void AddMessageHandler<TTPld>(Action<TCommunicator, TTPld> messageHandler)
+    public void AddMessageHandler<TTData>(Action<TCommunicator, TTData> messageHandler)
     {
-      var internalMessageHandler = new TypedMessageHandler<TCommunicator, TRequest, TProtocol, TTPld>(_payloadConverter, messageHandler);
-      AddHandler(_messageHandlers, typeof(TTPld), internalMessageHandler);
+      var internalMessageHandler = new TypedMessageHandler<TCommunicator, TRequest, TProtocol, TTData>(_payloadConverter, messageHandler);
+      AddHandler(_messageHandlers, typeof(TTData), internalMessageHandler);
     }
 
-    public void RemoveMessageHandler<TTPld>(Action<TCommunicator, TTPld> messageHandler)
+    public void RemoveMessageHandler<TTData>(Action<TCommunicator, TTData> messageHandler)
     {
-      RemoveHandler(_messageHandlers, typeof(TTPld), messageHandler);
+      RemoveHandler(_messageHandlers, typeof(TTData), messageHandler);
     }
 
-    public void AddRequestHandler<TTPld, TTRsp>(Action<TCommunicator, TypedRequest<TTPld, TTRsp>> requestHandler)
-      where TTPld : IRequest<TTRsp>
+    public void AddRequestHandler<TTData, TTRsp>(Action<TCommunicator, TypedRequest<TTData, TTRsp>> requestHandler)
+      where TTData : IRequest<TTRsp>
     {
-      var internalRequestHandler = new TypedRequestHandler<TCommunicator, TRequest, TProtocol, TTPld, TTRsp>(_payloadConverter, requestHandler);
-      AddHandler(_requestHandlers, typeof(TTPld), internalRequestHandler);
+      var internalRequestHandler = new TypedRequestHandler<TCommunicator, TRequest, TProtocol, TTData, TTRsp>(_payloadConverter, requestHandler);
+      AddHandler(_requestHandlers, typeof(TTData), internalRequestHandler);
     }
 
-    public void RemoveRequestHandler<TTPld, TTRsp>(Action<TCommunicator, TypedRequest<TTPld, TTRsp>> requestHandler)
-      where TTPld : IRequest<TTRsp>
+    public void RemoveRequestHandler<TTData, TTRsp>(Action<TCommunicator, TypedRequest<TTData, TTRsp>> requestHandler)
+      where TTData : IRequest<TTRsp>
     {
-      RemoveHandler(_requestHandlers, typeof(TTPld), requestHandler);
+      RemoveHandler(_requestHandlers, typeof(TTData), requestHandler);
     }
 
     internal void NotifyMessageReceived(TCommunicator communicator, Message<TypedPayload> message)

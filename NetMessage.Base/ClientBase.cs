@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 
 namespace NetMessage.Base
 {
-  public abstract class ClientBase<TClient, TRequest, TProtocol, TPld> : CommunicatorBase<TRequest, TProtocol, TPld>
-    where TClient : ClientBase<TClient, TRequest, TProtocol, TPld>
-    where TRequest : Request<TRequest, TProtocol, TPld>
-    where TProtocol : class, IProtocol<TPld>
+  public abstract class ClientBase<TClient, TRequest, TProtocol, TData> : CommunicatorBase<TRequest, TProtocol, TData>
+    where TClient : ClientBase<TClient, TRequest, TProtocol, TData>
+    where TRequest : Request<TRequest, TProtocol, TData>
+    where TProtocol : class, IProtocol<TData>
   {
     private Socket? _remoteSocket;
     private TProtocol? _protocolBuffer;
@@ -16,7 +16,7 @@ namespace NetMessage.Base
     public event Action<TClient>? Connected;
     public event Action<TClient>? Disconnected;
     public event Action<TClient, string, Exception?>? OnError;
-    public event Action<TClient, Message<TPld>>? MessageReceived;
+    public event Action<TClient, Message<TData>>? MessageReceived;
     public event Action<TClient, TRequest>? RequestReceived;
 
     /// <summary>
@@ -81,7 +81,7 @@ namespace NetMessage.Base
       Close();
     }
 
-    protected override void HandleMessage(Message<TPld> message)
+    protected override void HandleMessage(Message<TData> message)
     {
       MessageReceived?.Invoke((TClient)this, message);
     }

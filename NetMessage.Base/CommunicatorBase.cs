@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace NetMessage.Base
 {
-  public abstract class CommunicatorBase<TRequest, TProtocol, TPld> : IDisposable
-    where TRequest : Request<TRequest, TProtocol, TPld>
-    where TProtocol : class, IProtocol<TPld>
+  public abstract class CommunicatorBase<TRequest, TProtocol, TData> : IDisposable
+    where TRequest : Request<TRequest, TProtocol, TData>
+    where TProtocol : class, IProtocol<TData>
   {
-    private readonly ConcurrentDictionary<int, ResponseEvent<TPld>> _responseEvents = new ConcurrentDictionary<int, ResponseEvent<TPld>>();
+    private readonly ConcurrentDictionary<int, ResponseEvent<TData>> _responseEvents = new ConcurrentDictionary<int, ResponseEvent<TData>>();
 
     private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
     private int _responseIdCounter;
@@ -47,7 +47,7 @@ namespace NetMessage.Base
     /// <summary>
     /// Called for every message received.
     /// </summary>
-    protected abstract void HandleMessage(Message<TPld> message);
+    protected abstract void HandleMessage(Message<TData> message);
 
     /// <summary>
     /// Called for every request received.
@@ -98,7 +98,7 @@ namespace NetMessage.Base
     /// 
     /// Protected because concrete implementations may prefer that this method is not exposed.
     /// </summary>
-    protected Task<int> SendMessageInternalAsync(TPld messagePayload)
+    protected Task<int> SendMessageInternalAsync(TData messagePayload)
     {
       var rawData = ProtocolBuffer!.ToRawMessage(messagePayload);
       return SendRawDataAsync(rawData);
@@ -108,7 +108,7 @@ namespace NetMessage.Base
     /// Sends request to the remote socket and awaits the corresponding response.
     /// Protected because concrete implementations may prefer that this method is not exposed.
     /// </summary>
-    protected async Task<Response<TPld>?> SendRequestInternalAsync(TPld requestPayload)
+    protected async Task<Response<TData>?> SendRequestInternalAsync(TData requestPayload)
     {
       int responseId;
       lock (_responseEvents)
@@ -128,7 +128,7 @@ namespace NetMessage.Base
       }
 
       var waitToken = new ManualResetEventSlim(false);
-      var responseEvent = new ResponseEvent<TPld>(waitToken);
+      var responseEvent = new ResponseEvent<TData>(waitToken);
       _responseEvents[responseId] = responseEvent;
 
       var sendResult = await SendRawDataAsync(rawData);
@@ -199,7 +199,7 @@ namespace NetMessage.Base
             var receivedMessages = ProtocolBuffer!.FromRaw(rawData);
             foreach (var messageInfo in receivedMessages)
             {
-              if (messageInfo is Message<TPld> message)
+              if (messageInfo is Message<TData> message)
               {
                 HandleMessage(message);
               }
@@ -212,7 +212,7 @@ namespace NetMessage.Base
                   );
                 HandleRequest(request);
               }
-              else if (messageInfo is Response<TPld> response)
+              else if (messageInfo is Response<TData> response)
               {
                 var responseEvent = _responseEvents[response.ResponseId];
                 _responseEvents.TryRemove(response.ResponseId, out _);

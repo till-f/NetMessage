@@ -22,24 +22,24 @@ namespace NetMessage
       RequestReceived += _receiver.NotifyRequestReceived;
     }
 
-    public void AddMessageHandler<TTPld>(Action<NetMessageClient, TTPld> messageHandler)
+    public void AddMessageHandler<TTData>(Action<NetMessageClient, TTData> messageHandler)
     {
       _receiver.AddMessageHandler(messageHandler);
     }
 
-    public void RemoveMessageHandler<TTPld>(Action<NetMessageClient, TTPld> messageHandler)
+    public void RemoveMessageHandler<TTData>(Action<NetMessageClient, TTData> messageHandler)
     {
       _receiver.RemoveMessageHandler(messageHandler);
     }
 
-    public void AddRequestHandler<TTPld, TTRsp>(Action<NetMessageClient, TypedRequest<TTPld, TTRsp>> requestHandler)
-      where TTPld : IRequest<TTRsp>
+    public void AddRequestHandler<TTData, TTRsp>(Action<NetMessageClient, TypedRequest<TTData, TTRsp>> requestHandler)
+      where TTData : IRequest<TTRsp>
     {
       _receiver.AddRequestHandler(requestHandler);
     }
 
-    public void RemoveRequestHandler<TTPld, TTRsp>(Action<NetMessageClient, TypedRequest<TTPld, TTRsp>> requestHandler)
-      where TTPld : IRequest<TTRsp>
+    public void RemoveRequestHandler<TTData, TTRsp>(Action<NetMessageClient, TypedRequest<TTData, TTRsp>> requestHandler)
+      where TTData : IRequest<TTRsp>
     {
       _receiver.RemoveRequestHandler(requestHandler);
     }

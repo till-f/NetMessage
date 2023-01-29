@@ -9,11 +9,11 @@ using System.Threading.Tasks;
 
 namespace NetMessage.Base
 {
-  public abstract class ServerBase<TServer, TSession, TRequest, TProtocol, TPld> : IDisposable
-    where TServer : ServerBase<TServer, TSession, TRequest, TProtocol, TPld>
-    where TSession : SessionBase<TServer, TSession, TRequest, TProtocol, TPld>, new()
-    where TRequest : Request<TRequest, TProtocol, TPld>
-    where TProtocol : class, IProtocol<TPld>
+  public abstract class ServerBase<TServer, TSession, TRequest, TProtocol, TData> : IDisposable
+    where TServer : ServerBase<TServer, TSession, TRequest, TProtocol, TData>
+    where TSession : SessionBase<TServer, TSession, TRequest, TProtocol, TData>, new()
+    where TRequest : Request<TRequest, TProtocol, TData>
+    where TProtocol : class, IProtocol<TData>
   {
     private readonly Dictionary<Guid, TSession> _sessions = new Dictionary<Guid, TSession>();
     private readonly IPEndPoint _endPoint;
@@ -24,7 +24,7 @@ namespace NetMessage.Base
     public event Action<TSession>? SessionOpened;
     public event Action<TSession>? SessionClosed;
     public event Action<TServer, TSession?, string, Exception?>? OnError;
-    public event Action<TSession, Message<TPld>>? MessageReceived;
+    public event Action<TSession, Message<TData>>? MessageReceived;
     public event Action<TSession, TRequest>? RequestReceived;
 
     protected ServerBase(int listeningPort)
@@ -34,7 +34,7 @@ namespace NetMessage.Base
 
     /// <summary>
     /// The ResponseTimeout used for all sessions.
-    /// See <see cref="CommunicatorBase{TRequest, TProtocol, TPld}.ResponseTimeout"/>.
+    /// See <see cref="CommunicatorBase{TRequest, TProtocol, TData}.ResponseTimeout"/>.
     /// </summary>
     public TimeSpan ResponseTimeout { get; set; }
 
@@ -129,7 +129,7 @@ namespace NetMessage.Base
       SessionClosed?.Invoke(session);
     }
 
-    internal void NotifyMessagesReceived(TSession session, Message<TPld> message)
+    internal void NotifyMessagesReceived(TSession session, Message<TData> message)
     {
       MessageReceived?.Invoke(session, message);
     }

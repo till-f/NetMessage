@@ -3,7 +3,7 @@ using System.Threading;
 
 namespace NetMessage.Base
 {
-  public class ResponseEvent<TPld>
+  public class ResponseEvent<TData>
   {
     private readonly ManualResetEventSlim _resetEvent;
 
@@ -12,7 +12,7 @@ namespace NetMessage.Base
       _resetEvent = resetEvent;
     }
 
-    public Response<TPld>? Response { get; set; }
+    public Response<TData>? Response { get; set; }
 
     public void Set()
     {
