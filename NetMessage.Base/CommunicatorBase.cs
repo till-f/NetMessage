@@ -13,6 +13,7 @@ namespace NetMessage.Base
   {
     private readonly ConcurrentDictionary<int, ResponseEvent<TData>> _responseEvents = new ConcurrentDictionary<int, ResponseEvent<TData>>();
 
+    private readonly ManualResetEvent _receiveTaskStoppedEvent = new ManualResetEvent(false);
     private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
     private int _responseIdCounter;
 
@@ -71,6 +72,7 @@ namespace NetMessage.Base
     public void Close()
     {
       _cancellationTokenSource.Cancel();
+      _receiveTaskStoppedEvent.WaitOne(TimeSpan.FromSeconds(1));
       RemoteSocket?.Close();
       RemoteSocket?.Dispose();
       NotifyClosed();
@@ -173,6 +175,8 @@ namespace NetMessage.Base
     /// </summary>
     protected void StartReceiveAsync()
     {
+      _receiveTaskStoppedEvent.Reset();
+
       var receiveTask = Task.Run(() =>
       {
         while (!CancellationToken.IsCancellationRequested)
@@ -228,6 +232,8 @@ namespace NetMessage.Base
           }
         }
       }, CancellationToken);
+
+      _receiveTaskStoppedEvent.Set();
 
       // The receive task is very robust and almost impossible to fail. Any exception is propagated via the OnError event.
       // Only if an exception occurs inside an OnError handler, this exception would stop the receive task more or less silently.
