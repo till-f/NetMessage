@@ -9,7 +9,7 @@ namespace NetMessage.Examples.SimpleString
   /// </summary>
   public class SimpleStringRequest : Request<SimpleStringRequest, SimpleStringProtocol, string>
   {
-    public SimpleStringRequest(string payload, int requestId) : base(payload, requestId)
+    public SimpleStringRequest(string request, int requestId) : base(request, requestId)
     {
     }
 

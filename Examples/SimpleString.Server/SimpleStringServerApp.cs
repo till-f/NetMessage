@@ -61,12 +61,12 @@ namespace NetMessage.Examples.SimpleString.Server
 
     private static void OnMessageReceived(SimpleStringSession session, Message<string> message)
     {
-      Console.WriteLine($"MESSAGE RECEIVED: {message.Payload}");
+      Console.WriteLine($"MESSAGE RECEIVED: {message.Data}");
     }
 
     private static void OnRequestReceived(SimpleStringSession session, SimpleStringRequest request)
     {
-      Console.WriteLine($"REQUEST RECEIVED: {request.Payload}");
+      Console.WriteLine($"REQUEST RECEIVED: {request.Data}");
       request.SendResponseAsync("Verry sunny!");
     }
 
@@ -90,7 +90,7 @@ namespace NetMessage.Examples.SimpleString.Server
     private static async void RequestAndResponseExample()
     {
       var response = await _openSession!.SendRequestAsync("Do you like me?");
-      Console.WriteLine($"RECEIVED RESPONSE: {response?.Payload}");
+      Console.WriteLine($"RECEIVED RESPONSE: {response?.Data}");
     }
   }
 }

@@ -2,6 +2,6 @@
 {
   public interface IPacket<TData>
   {
-    TData Payload { get; }
+    TData Data { get; }
   }
 }

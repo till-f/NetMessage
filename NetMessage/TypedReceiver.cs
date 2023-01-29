@@ -12,22 +12,22 @@ namespace NetMessage
   /// appropriate handler.
   /// </summary>
   public class TypedReceiver<TCommunicator, TRequest, TProtocol>
-    where TCommunicator : CommunicatorBase<TRequest, TProtocol, TypedPayload>
-    where TRequest : Request<TRequest, TProtocol, TypedPayload>
-    where TProtocol : class, IProtocol<TypedPayload>
+    where TCommunicator : CommunicatorBase<TRequest, TProtocol, TypedDataString>
+    where TRequest : Request<TRequest, TProtocol, TypedDataString>
+    where TProtocol : class, IProtocol<TypedDataString>
   {
     private readonly Dictionary<string, List<TypedMessageHandler<TCommunicator, TRequest, TProtocol>>> _messageHandlers = new Dictionary<string, List<TypedMessageHandler<TCommunicator, TRequest, TProtocol>>>();
     private readonly Dictionary<string, List<TypedRequestHandler<TCommunicator, TRequest, TProtocol>>> _requestHandlers = new Dictionary<string, List<TypedRequestHandler<TCommunicator, TRequest, TProtocol>>>();
-    private readonly IPayloadSerializer _payloadConverter;
+    private readonly IDataSerializer _dataSerializer;
 
-    public TypedReceiver(IPayloadSerializer payloadConverter)
+    public TypedReceiver(IDataSerializer dataSerializer)
     {
-      _payloadConverter = payloadConverter;
+      _dataSerializer = dataSerializer;
     }
 
     public void AddMessageHandler<TTData>(Action<TCommunicator, TTData> messageHandler)
     {
-      var internalMessageHandler = new TypedMessageHandler<TCommunicator, TRequest, TProtocol, TTData>(_payloadConverter, messageHandler);
+      var internalMessageHandler = new TypedMessageHandler<TCommunicator, TRequest, TProtocol, TTData>(_dataSerializer, messageHandler);
       AddHandler(_messageHandlers, typeof(TTData), internalMessageHandler);
     }
 
@@ -39,7 +39,7 @@ namespace NetMessage
     public void AddRequestHandler<TTData, TTRsp>(Action<TCommunicator, TypedRequest<TTData, TTRsp>> requestHandler)
       where TTData : IRequest<TTRsp>
     {
-      var internalRequestHandler = new TypedRequestHandler<TCommunicator, TRequest, TProtocol, TTData, TTRsp>(_payloadConverter, requestHandler);
+      var internalRequestHandler = new TypedRequestHandler<TCommunicator, TRequest, TProtocol, TTData, TTRsp>(_dataSerializer, requestHandler);
       AddHandler(_requestHandlers, typeof(TTData), internalRequestHandler);
     }
 
@@ -49,9 +49,9 @@ namespace NetMessage
       RemoveHandler(_requestHandlers, typeof(TTData), requestHandler);
     }
 
-    internal void NotifyMessageReceived(TCommunicator communicator, Message<TypedPayload> message)
+    internal void NotifyMessageReceived(TCommunicator communicator, Message<TypedDataString> message)
     {
-      var typeId = message.Payload.TypeId;
+      var typeId = message.Data.TypeId;
 
       if (_messageHandlers.ContainsKey(typeId))
       {
@@ -61,7 +61,7 @@ namespace NetMessage
 
     internal void NotifyRequestReceived(TCommunicator communicator, TypedRequestInternal request)
     {
-      var typeId = request.Payload.TypeId;
+      var typeId = request.Data.TypeId;
 
       if (_requestHandlers.ContainsKey(typeId))
       {

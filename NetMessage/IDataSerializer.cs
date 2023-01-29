@@ -2,7 +2,7 @@
 
 namespace NetMessage
 {
-  public interface IPayloadSerializer
+  public interface IDataSerializer
   {
     /// <summary>
     /// The encoding to be used by the protocol layer. UTF8 is a good default,
@@ -21,7 +21,7 @@ namespace NetMessage
     /// <summary>
     /// Deserializes the given string into the corresponding object of type T.
     /// </summary>
-    T Deserialize<T>(string payloadString);
+    T Deserialize<T>(string dataString);
 
     /// <summary>
     /// Serialized the given object.

@@ -6,12 +6,12 @@ namespace NetMessage
 {
   public abstract class TypedReceiveHandler
   {
-    protected TypedReceiveHandler(IPayloadSerializer payloadConverter)
+    protected TypedReceiveHandler(IDataSerializer dataSerializer)
     {
-      PayloadConverter = payloadConverter;
+      DataSerializer = dataSerializer;
     }
 
-    protected IPayloadSerializer PayloadConverter { get; }
+    protected IDataSerializer DataSerializer { get; }
 
     public abstract object UserHandler { get; }
   }
@@ -21,13 +21,13 @@ namespace NetMessage
   /// forwards them to the properly typed message handler.
   /// </summary>
   public abstract class TypedMessageHandler<TCommunicator, TRequest, TProtocol> : TypedReceiveHandler
-    where TCommunicator : CommunicatorBase<TRequest, TProtocol, TypedPayload>
-    where TRequest : Request<TRequest, TProtocol, TypedPayload>
-    where TProtocol : class, IProtocol<TypedPayload>
+    where TCommunicator : CommunicatorBase<TRequest, TProtocol, TypedDataString>
+    where TRequest : Request<TRequest, TProtocol, TypedDataString>
+    where TProtocol : class, IProtocol<TypedDataString>
   {
-    protected TypedMessageHandler(IPayloadSerializer payloadConverter) : base(payloadConverter) { }
+    protected TypedMessageHandler(IDataSerializer dataSerializer) : base(dataSerializer) { }
 
-    public abstract void InvokeMessageHandler(TCommunicator communicator, Message<TypedPayload> message);
+    public abstract void InvokeMessageHandler(TCommunicator communicator, Message<TypedDataString> message);
   }
 
   /// <summary>
@@ -35,11 +35,11 @@ namespace NetMessage
   /// forwards them to the properly typed message handler.
   /// </summary>
   public class TypedMessageHandler<TCommunicator, TRequest, TProtocol, TTData> : TypedMessageHandler<TCommunicator, TRequest, TProtocol>
-    where TCommunicator : CommunicatorBase<TRequest, TProtocol, TypedPayload>
-    where TRequest : Request<TRequest, TProtocol, TypedPayload>
-    where TProtocol : class, IProtocol<TypedPayload>
+    where TCommunicator : CommunicatorBase<TRequest, TProtocol, TypedDataString>
+    where TRequest : Request<TRequest, TProtocol, TypedDataString>
+    where TProtocol : class, IProtocol<TypedDataString>
   {
-    public TypedMessageHandler(IPayloadSerializer payloadConverter, Action<TCommunicator, TTData> messageHandler) : base (payloadConverter)
+    public TypedMessageHandler(IDataSerializer dataSerializer, Action<TCommunicator, TTData> messageHandler) : base (dataSerializer)
     {
       MessageHandler = messageHandler;
     }
@@ -48,9 +48,9 @@ namespace NetMessage
 
     public override object UserHandler => MessageHandler;
 
-    public override void InvokeMessageHandler(TCommunicator communicator, Message<TypedPayload> message)
+    public override void InvokeMessageHandler(TCommunicator communicator, Message<TypedDataString> message)
     {
-      var instance = PayloadConverter.Deserialize<TTData>(message.Payload.ActualPayload);
+      var instance = DataSerializer.Deserialize<TTData>(message.Data.DataString);
       if (instance == null)
       {
         throw new InvalidOperationException($"Could not create instance of type {typeof(TTData)}");
@@ -64,11 +64,11 @@ namespace NetMessage
   /// forwards them to the properly typed request handler.
   /// </summary>
   public abstract class TypedRequestHandler<TCommunicator, TRequest, TProtocol> : TypedReceiveHandler
-    where TCommunicator : CommunicatorBase<TRequest, TProtocol, TypedPayload>
-    where TRequest : Request<TRequest, TProtocol, TypedPayload>
-    where TProtocol : class, IProtocol<TypedPayload>
+    where TCommunicator : CommunicatorBase<TRequest, TProtocol, TypedDataString>
+    where TRequest : Request<TRequest, TProtocol, TypedDataString>
+    where TProtocol : class, IProtocol<TypedDataString>
   {
-    protected TypedRequestHandler(IPayloadSerializer payloadConverter) : base (payloadConverter) { }
+    protected TypedRequestHandler(IDataSerializer dataSerializer) : base (dataSerializer) { }
 
     public abstract void InvokeRequestHandler(TCommunicator communicator, TypedRequestInternal request);
   }
@@ -78,12 +78,12 @@ namespace NetMessage
   /// forwards them to the properly typed request handler.
   /// </summary>
   public class TypedRequestHandler<TCommunicator, TRequest, TProtocol, TTData, TTRsp> : TypedRequestHandler<TCommunicator, TRequest, TProtocol>
-    where TCommunicator : CommunicatorBase<TRequest, TProtocol, TypedPayload>
-    where TRequest : Request<TRequest, TProtocol, TypedPayload>
-    where TProtocol : class, IProtocol<TypedPayload>
+    where TCommunicator : CommunicatorBase<TRequest, TProtocol, TypedDataString>
+    where TRequest : Request<TRequest, TProtocol, TypedDataString>
+    where TProtocol : class, IProtocol<TypedDataString>
     where TTData : IRequest<TTRsp>
   {
-    public TypedRequestHandler(IPayloadSerializer payloadConverter, Action<TCommunicator, TypedRequest<TTData, TTRsp>> requestHandler) : base(payloadConverter)
+    public TypedRequestHandler(IDataSerializer dataSerializer, Action<TCommunicator, TypedRequest<TTData, TTRsp>> requestHandler) : base(dataSerializer)
     {
       RequestHandler = requestHandler;
     }
@@ -94,12 +94,12 @@ namespace NetMessage
 
     public override void InvokeRequestHandler(TCommunicator communicator, TypedRequestInternal request)
     {
-      var instance = PayloadConverter.Deserialize<TTData>(request.Payload.ActualPayload);
+      var instance = DataSerializer.Deserialize<TTData>(request.Data.DataString);
       if (instance == null)
       {
         throw new InvalidOperationException($"Could not create instance of type {typeof(TTData)}");
       }
-      var deserializedRequest = new TypedRequest<TTData, TTRsp>(PayloadConverter, request, instance);
+      var deserializedRequest = new TypedRequest<TTData, TTRsp>(DataSerializer, request, instance);
       RequestHandler.Invoke(communicator, deserializedRequest);
     }
   }

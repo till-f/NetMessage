@@ -10,13 +10,13 @@ namespace NetMessage
   /// Uses the default XmlSerializer to send (de)serialize objects.
   /// The flag "useBase64" can be used to avoid problems if the serialization may contain the termination sequence.
   /// </summary>
-  public class XmlPayloadSerializer : IPayloadSerializer
+  public class XmlDataSerializer : IDataSerializer
   {
     private static readonly XmlSerializerNamespaces _emptyNs = new XmlSerializerNamespaces(new[] { XmlQualifiedName.Empty });
 
     private readonly bool _useBase64;
 
-    public XmlPayloadSerializer(bool useBase64 = false)
+    public XmlDataSerializer(bool useBase64 = false)
     {
       _useBase64 = useBase64;
 
@@ -34,17 +34,17 @@ namespace NetMessage
 
     public string ProtocolTerminator { get; } = TypedProtocol.DefaultTerminator;
 
-    public T Deserialize<T>(string payloadString)
+    public T Deserialize<T>(string dataString)
     {
       if (_useBase64)
       {
-        payloadString = Encoding.UTF8.GetString(Convert.FromBase64String(payloadString));
+        dataString = Encoding.UTF8.GetString(Convert.FromBase64String(dataString));
       }
 
-      using (TextReader payloadStream = new StringReader(payloadString))
+      using (TextReader dataStream = new StringReader(dataString))
       {
         var serializer = new XmlSerializer(typeof(T));
-        return (T) serializer.Deserialize(payloadStream);
+        return (T) serializer.Deserialize(dataStream);
       }
     }
 

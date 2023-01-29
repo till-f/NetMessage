@@ -4,19 +4,19 @@ using System.Threading.Tasks;
 
 namespace NetMessage
 {
-  public class NetMessageClient : ClientBase<NetMessageClient, TypedRequestInternal, TypedProtocol, TypedPayload>
+  public class NetMessageClient : ClientBase<NetMessageClient, TypedRequestInternal, TypedProtocol, TypedDataString>
   {
     private readonly TypedReceiver<NetMessageClient, TypedRequestInternal, TypedProtocol> _receiver;
-    private readonly IPayloadSerializer _payloadConverter;
+    private readonly IDataSerializer _dataSerializer;
 
-    public NetMessageClient() : this(new XmlPayloadSerializer())
+    public NetMessageClient() : this(new XmlDataSerializer())
     {
     }
 
-    public NetMessageClient(IPayloadSerializer payloadConverter)
+    public NetMessageClient(IDataSerializer dataSerializer)
     {
-      _payloadConverter = payloadConverter;
-      _receiver = new TypedReceiver<NetMessageClient, TypedRequestInternal, TypedProtocol>(_payloadConverter);
+      _dataSerializer = dataSerializer;
+      _receiver = new TypedReceiver<NetMessageClient, TypedRequestInternal, TypedProtocol>(_dataSerializer);
 
       MessageReceived += _receiver.NotifyMessageReceived;
       RequestReceived += _receiver.NotifyRequestReceived;
@@ -52,8 +52,8 @@ namespace NetMessage
     public Task<int> SendMessageAsync(object message)
     {
       string typeId = message.GetType().FullName;
-      string serialized = _payloadConverter.Serialize(message);
-      return SendMessageInternalAsync(new TypedPayload(typeId, serialized));
+      string serialized = _dataSerializer.Serialize(message);
+      return SendMessageInternalAsync(new TypedDataString(typeId, serialized));
     }
 
     /// <summary>
@@ -65,8 +65,8 @@ namespace NetMessage
     public async Task<TTRsp> SendRequestAsync<TTRsp>(IRequest<TTRsp> request)
     {
       string typeId = request.GetType().FullName;
-      string serialized = _payloadConverter.Serialize(request);
-      var result = await SendRequestInternalAsync(new TypedPayload(typeId, serialized));
+      string serialized = _dataSerializer.Serialize(request);
+      var result = await SendRequestInternalAsync(new TypedDataString(typeId, serialized));
 
       // result is null if task was cancelled normally (abnormal cancellations or failures will throw)
       if (result == null)
@@ -76,15 +76,15 @@ namespace NetMessage
 #pragma warning restore CS8603
       }
 
-      return _payloadConverter.Deserialize<TTRsp>(result.Payload.ActualPayload);
+      return _dataSerializer.Deserialize<TTRsp>(result.Data.DataString);
     }
 
     protected override TypedProtocol CreateProtocolBuffer()
     {
       return new TypedProtocol
       {
-        Encoding = _payloadConverter.ProtocolEncoding,
-        Terminator = _payloadConverter.ProtocolTerminator
+        Encoding = _dataSerializer.ProtocolEncoding,
+        Terminator = _dataSerializer.ProtocolTerminator
       };
     }
   }

@@ -7,13 +7,13 @@
     /// <summary>
     /// Container for a response (in contrast to message and request)
     /// </summary>
-    public Response(TData payload, int responseId)
+    public Response(TData data, int responseId)
     {
-      Payload = payload;
+      Data = data;
       ResponseId = responseId;
     }
 
-    public TData Payload { get; }
+    public TData Data { get; }
 
     public int ResponseId { get; }
   }

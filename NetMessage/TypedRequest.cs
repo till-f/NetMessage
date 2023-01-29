@@ -13,12 +13,12 @@ namespace NetMessage
   public class TypedRequest<TTData, TTRsp>
     where TTData : IRequest<TTRsp>
   {
-    private readonly IPayloadSerializer _payloadConverter;
+    private readonly IDataSerializer _dataSerializer;
     private readonly TypedRequestInternal _requestInternal;
 
-    public TypedRequest(IPayloadSerializer payloadConverter, TypedRequestInternal requestInternal, TTData request)
+    public TypedRequest(IDataSerializer dataSerializer, TypedRequestInternal requestInternal, TTData request)
     {
-      _payloadConverter = payloadConverter;
+      _dataSerializer = dataSerializer;
       _requestInternal = requestInternal;
       Request = request;
     }
@@ -35,8 +35,8 @@ namespace NetMessage
       if (response == null) throw new ArgumentNullException(nameof(response));
       
       var typeId = response.GetType().FullName;
-      var serialized = _payloadConverter.Serialize(response);
-      return _requestInternal.SendResponseAsync(new TypedPayload(typeId, serialized));
+      var serialized = _dataSerializer.Serialize(response);
+      return _requestInternal.SendResponseAsync(new TypedDataString(typeId, serialized));
     }
   }
 
@@ -45,15 +45,15 @@ namespace NetMessage
   /// Request for the <see cref="TypedProtocol"/>. Only used internally.
   /// See <see cref="TypedRequest{TTData, TTRsp}"/> for the corresponding class that is exposed to the user.
   /// </summary>
-  public class TypedRequestInternal : Request<TypedRequestInternal, TypedProtocol, TypedPayload>
+  public class TypedRequestInternal : Request<TypedRequestInternal, TypedProtocol, TypedDataString>
   {
-    internal TypedRequestInternal(TypedPayload payload, int requestId) : base(payload, requestId)
+    internal TypedRequestInternal(TypedDataString typedDataString, int requestId) : base(typedDataString, requestId)
     {
     }
 
-    internal Task<int> SendResponseAsync(TypedPayload response)
+    internal Task<int> SendResponseAsync(TypedDataString typedDataString)
     {
-      return SendResponseInternalAsync(response);
+      return SendResponseInternalAsync(typedDataString);
     }
   }
 }

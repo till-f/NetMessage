@@ -5,11 +5,11 @@
     /// <summary>
     /// Container for a message (in contrast to response and request)
     /// </summary>
-    public Message(TData payload)
+    public Message(TData data)
     {
-      Payload = payload;
+      Data = data;
     }
 
-    public TData Payload { get; }
+    public TData Data { get; }
   }
 }

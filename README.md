@@ -29,7 +29,7 @@ public class WeatherResponse
 } 
 ```
 
-*Instances of these classes are (de)serialized by the selected `IPayloadSerializer`. By default, the `XmlSerializer` from
+*Instances of these classes are (de)serialized by the selected `IDataSerializer`. By default, the `XmlSerializer` from
 .NET is used.*
 
 ### 3. Initialize and start server
@@ -143,9 +143,9 @@ and adding the corresponding concrete classes for the server, client and session
 [Examples](https://github.com/till-f/NetMessage/tree/main/Examples) folder for details.
 
 If you just want to change the way how C# objects are (de)serialized, e.g. if you want to use Json instead of XML, all you have to do
-is implementing the `IPayloadSerializer` interface ([IPayloadSerializer.cs](NetMessage/IPayloadSerializer.cs)) and pass the
+is implementing the `IDataSerializer` interface ([IDataSerializer.cs](NetMessage/IDataSerializer.cs)) and pass the
 corresponding instance to the `NetMessageServer` and `NetMessageClient` constructor respectively. Take a look at the existing
-implementation for XML in [XmlPayloadSerializer.cs](NetMessage/XmlPayloadSerializer.cs) if you need an example.
+implementation for XML in [XmlDataSerializer.cs](NetMessage/XmlDataSerializer.cs) if you need an example.
 
 ## Tests
 There is small but strong collection of integration tests, see [here](https://github.com/till-f/NetMessage/tree/main/Tests).

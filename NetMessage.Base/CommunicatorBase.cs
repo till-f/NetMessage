@@ -98,9 +98,9 @@ namespace NetMessage.Base
     /// 
     /// Protected because concrete implementations may prefer that this method is not exposed.
     /// </summary>
-    protected Task<int> SendMessageInternalAsync(TData messagePayload)
+    protected Task<int> SendMessageInternalAsync(TData data)
     {
-      var rawData = ProtocolBuffer!.ToRawMessage(messagePayload);
+      var rawData = ProtocolBuffer!.ToRawMessage(data);
       return SendRawDataAsync(rawData);
     }
 
@@ -108,7 +108,7 @@ namespace NetMessage.Base
     /// Sends request to the remote socket and awaits the corresponding response.
     /// Protected because concrete implementations may prefer that this method is not exposed.
     /// </summary>
-    protected async Task<Response<TData>?> SendRequestInternalAsync(TData requestPayload)
+    protected async Task<Response<TData>?> SendRequestInternalAsync(TData data)
     {
       int responseId;
       lock (_responseEvents)
@@ -119,7 +119,7 @@ namespace NetMessage.Base
       byte[] rawData;
       try
       {
-        rawData = ProtocolBuffer!.ToRawRequest(requestPayload, responseId);
+        rawData = ProtocolBuffer!.ToRawRequest(data, responseId);
       }
       catch (Exception ex)
       {

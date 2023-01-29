@@ -14,13 +14,13 @@ namespace NetMessage.Base.Message
     /// <summary>
     /// Container for a response (in contrast to message and request)
     /// </summary>
-    protected Request(TData payload, int requestId)
+    protected Request(TData data, int requestId)
     {
-      Payload = payload;
+      Data = data;
       RequestId = requestId;
     }
 
-    public TData Payload { get; }
+    public TData Data { get; }
 
     public int RequestId { get; }
 

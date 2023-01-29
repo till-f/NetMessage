@@ -23,7 +23,7 @@ namespace NetMessage.Base
     /// <summary>
     /// Converts a message object to the raw message format.
     /// </summary>
-    byte[] ToRawMessage(TData payload);
+    byte[] ToRawMessage(TData data);
 
     /// <summary>
     /// Converts a request object to the raw request format.
@@ -32,7 +32,7 @@ namespace NetMessage.Base
     /// the client and server implementation must not expose this method:
     /// <see cref="CommunicatorBase{TRequest, TProtocol, TData}.SendRequestInternalAsync(TData)"/>
     /// </summary>
-    byte[] ToRawRequest(TData payload, int requestId);
+    byte[] ToRawRequest(TData data, int requestId);
 
     /// <summary>
     /// Converts a response object to the raw response format.
@@ -41,6 +41,6 @@ namespace NetMessage.Base
     /// the client and server implementation must not expose this method:
     /// <see cref="CommunicatorBase{TRequest, TProtocol, TData}.SendRequestInternalAsync(TData)"/>
     /// </summary>
-    byte[] ToRawResponse(TData payload, int responseId);
+    byte[] ToRawResponse(TData data, int responseId);
   }
 }
