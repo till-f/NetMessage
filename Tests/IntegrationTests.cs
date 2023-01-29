@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NetMessage.Integration.Test.TestFramework;
@@ -14,21 +15,31 @@ namespace NetMessage.Integration.Test
     private const int MessageCount = 2000;
     private const int ClientCount = 2;
 
+    private const int ResponseTimeoutMs = 200;
+    private const int ResponseTimeoutMaxDiscr = 20;
+    private const string TestMessageText = "TestMessage";
+    private const string TestRequestText = "TestRequest";
+
     private NetMessageServer? _server;
     private readonly NetMessageClient[] _clients = new NetMessageClient[ClientCount];
     private readonly NetMessageSession[] _sessions = new NetMessageSession[ClientCount];
     private readonly int[] _receivedMessagesCount = new int[ClientCount];
-    private readonly WaitToken[] _messageReceivedWt = new WaitToken[ClientCount];
+    private readonly int[] _receivedRequestsCount = new int[ClientCount];
+    private readonly WaitToken[] _receivedMessageWaitToken = new WaitToken[ClientCount];
+    private readonly WaitToken[] _receivedRequestWaitToken = new WaitToken[ClientCount];
 
     private WaitToken? _sessionOpenedWt;
     private WaitToken? _sessionClosedWt;
     private NetMessageSession? _lastOpenedSession;
     private NetMessageSession? _lastClosedSession;
 
+    public bool _ignoreServerErrors;
+
     [TestInitialize]
     public void TestInitialize()
     {
       _server = new NetMessageServer(ServerPort);
+      _server.ResponseTimeout = TimeSpan.FromMilliseconds(ResponseTimeoutMs);
       _server.OnError += OnServerError;
       _server.SessionOpened += OnSessionOpened;
       _server.SessionClosed += OnSessionClosed;
@@ -37,8 +48,11 @@ namespace NetMessage.Integration.Test
       for (int i = 0; i < ClientCount; i++)
       {
         _clients[i] = new NetMessageClient();
+        _clients[i].ResponseTimeout = TimeSpan.FromMilliseconds(ResponseTimeoutMs);
         _receivedMessagesCount[i] = 0;
-        _messageReceivedWt[i] = new WaitToken(MessageCount);
+        _receivedRequestsCount[i] = 0;
+        _receivedMessageWaitToken[i] = new WaitToken(MessageCount);
+        _receivedRequestWaitToken[i] = new WaitToken(MessageCount);
 
         ConnectClient(i);
       }
@@ -62,6 +76,36 @@ namespace NetMessage.Integration.Test
       var task = _clients[0].ConnectAsync(ServerHost, ServerPort);
       task.WaitAndAssert("Connect task did not succeed");
       Assert.IsFalse(task.Result, "Connecting of already connected client did not return false");
+    }
+
+    [TestMethod]
+    public async Task RespondWithTimeout()
+    {
+      // Test 1: successful request
+      _server!.AddRequestHandler<TestRequest, TestResponse>(OnRequestReceived);
+
+      _receivedRequestWaitToken[0] = new WaitToken(1);
+      var result = await _clients[0].SendRequestAsync(new TestRequest { RequestText = TestRequestText, RequestCount = 0 });
+      Assert.AreEqual(TestRequestText.ToLowerInvariant(), result.ResponseText, "Unexpected response received");
+      _receivedRequestWaitToken[0].WaitAndAssert("Request was not received by server");
+
+      // Test 2: unsuccessful request - server is not listening
+      _server!.RemoveRequestHandler<TestRequest, TestResponse>(OnRequestReceived);
+      await SendRequestAndExpectTimeout(0, 1); // the request will never reach the server, i.e., the request count is irrelevant
+
+      // Test 3: unsuccessful request - server is too slow
+      _server!.AddRequestHandler<TestRequest, TestResponse>((session, tr) =>
+      {
+        Thread.Sleep(ResponseTimeoutMs + 10);
+        OnRequestReceived(session, tr);
+      });
+
+      _receivedRequestWaitToken[0] = new WaitToken(1);
+      await SendRequestAndExpectTimeout(0, 1); // same requestCount as in previous message, because previous one was not received
+      _receivedRequestWaitToken[0].WaitAndAssert("Request was not received by server");
+
+      // TestCleanup() will disconnect the client in the next step, but the server might still try to send the response (our timeout/threshold is pretty tight)
+      _ignoreServerErrors = true;
     }
 
     [TestMethod]
@@ -96,8 +140,8 @@ namespace NetMessage.Integration.Test
       sendTask0.WaitAndAssert("Send task 0 did not finish");
       sendTask1.WaitAndAssert("Send task 1 did not finish");
 
-      _messageReceivedWt[0].WaitAndAssert("Not all messages from client 0 were received");
-      _messageReceivedWt[1].WaitAndAssert("Not all messages from client 1 were received");
+      _receivedMessageWaitToken[0].WaitAndAssert("Not all messages from client 0 were received");
+      _receivedMessageWaitToken[1].WaitAndAssert("Not all messages from client 1 were received");
     }
 
     [TestMethod]
@@ -112,8 +156,8 @@ namespace NetMessage.Integration.Test
       sendTask0.WaitAndAssert("Send task 0 did not finish");
       sendTask1.WaitAndAssert("Send task 1 did not finish");
 
-      _messageReceivedWt[0].WaitAndAssert("Not all messages from client 0 were received");
-      _messageReceivedWt[1].WaitAndAssert("Not all messages from client 1 were received");
+      _receivedMessageWaitToken[0].WaitAndAssert("Not all messages from client 0 were received");
+      _receivedMessageWaitToken[1].WaitAndAssert("Not all messages from client 1 were received");
     }
 
     private void ConnectClient(int clientIndex)
@@ -133,6 +177,25 @@ namespace NetMessage.Integration.Test
       _sessions[clientIndex] = _lastOpenedSession;
     }
 
+    private async Task SendRequestAndExpectTimeout(int clientIndex, int requestCount)
+    {
+      var startTime = DateTime.Now;
+      try
+      {
+        var result = await _clients[clientIndex].SendRequestAsync(new TestRequest { RequestText = TestRequestText, RequestCount = requestCount });
+      }
+      catch (TimeoutException)
+      {
+        var delta = (DateTime.Now - startTime).TotalMilliseconds;
+        var minDelta = ResponseTimeoutMs - ResponseTimeoutMaxDiscr;
+        var maxDelta = ResponseTimeoutMs + ResponseTimeoutMaxDiscr;
+        Assert.IsTrue(delta > minDelta && delta < maxDelta, $"Timeout did not occur in expected time, it occured after {delta} ms");
+        return;
+      }
+
+      Assert.Fail("Exception was not thrown");
+    }
+
     private void SendMessages(object communicator)
     {
       var taskList = new List<Task<int>>();
@@ -143,7 +206,7 @@ namespace NetMessage.Integration.Test
         {
           sendTask = client.SendMessageAsync(new TestMessage
           {
-            MessageText = "MyMessage",
+            MessageText = TestMessageText,
             MessageCount = i
           });
         }
@@ -151,7 +214,7 @@ namespace NetMessage.Integration.Test
         {
           sendTask = session.SendMessageAsync(new TestMessage
           {
-            MessageText = "MyMessage",
+            MessageText = TestMessageText,
             MessageCount = i
           });
         }
@@ -169,40 +232,59 @@ namespace NetMessage.Integration.Test
       }
     }
 
+    private void OnRequestReceived(object communicator, TypedRequest<TestRequest, TestResponse> tr)
+    {
+      tr.SendResponseAsync(new TestResponse { ResponseText = tr.Request.RequestText?.ToLowerInvariant() });
+
+      var communicatorIndex = GetCommunicatorIndex(communicator);
+
+      TestContext!.WriteLine($"Received Request on {communicator.GetType().Name} {communicatorIndex}: {tr.Request.RequestCount}");
+
+      var expectedCount = _receivedRequestsCount[communicatorIndex]++;
+      Assert.AreEqual(expectedCount, tr.Request.RequestCount, "Unexpected request count");
+      _receivedRequestWaitToken[communicatorIndex].Signal();
+    }
+
     private void OnMessageReceived(object communicator, TestMessage message)
     {
-      Assert.AreEqual(message.MessageText, "MyMessage");
+      Assert.AreEqual(message.MessageText, TestMessageText);
 
-      var communicatorIndex = -1;
-      if (communicator is NetMessageClient client)
-      {
-        communicatorIndex = Array.IndexOf(_clients, client);
-      }
-      else if (communicator is NetMessageSession session)
-      {
-        communicatorIndex = Array.IndexOf(_sessions, session);
-      }
-
-      if (communicatorIndex < 0)
-      {
-        throw new AssertFailedException($"Message received from unexpected communicator: {communicator}");
-      }
+      var communicatorIndex = GetCommunicatorIndex(communicator);
 
       TestContext!.WriteLine($"Received Message on {communicator.GetType().Name} {communicatorIndex}: {message.MessageCount}");
 
       var expectedCount = _receivedMessagesCount[communicatorIndex]++;
-      Assert.AreEqual(expectedCount, message.MessageCount);
-      _messageReceivedWt[communicatorIndex].Signal();
+      Assert.AreEqual(expectedCount, message.MessageCount, "Unexpected message count");
+      _receivedMessageWaitToken[communicatorIndex].Signal();
     }
-    
+
+    private int GetCommunicatorIndex(object communicator)
+    {
+      if (communicator is NetMessageClient client)
+      {
+        return Array.IndexOf(_clients, client);
+      }
+      else if (communicator is NetMessageSession session)
+      {
+        return Array.IndexOf(_sessions, session);
+      }
+
+      throw new AssertFailedException($"Unexpected communicator object: {communicator}");
+    }
+
     private void OnServerError(NetMessageServer server, NetMessageSession? session, string errorMessage, Exception? ex)
     {
-      TestContext!.WriteLine($"Server error: {errorMessage}");
+      if (_ignoreServerErrors)
+      {
+        return;
+      }
+
       if (ex != null)
       {
-        TestContext.WriteLine(ex.Message);
-        TestContext.WriteLine(ex.StackTrace);
+        errorMessage += ": " + ex.Message + "\n" + ex.StackTrace;        
       }
+
+      Assert.Fail($"Server error: {errorMessage}");
     }
 
     private void OnSessionOpened(NetMessageSession session)
@@ -223,5 +305,17 @@ namespace NetMessage.Integration.Test
     public string? MessageText { get; set; }
 
     public int MessageCount { get; set; }
+  }
+
+  public class TestRequest : IRequest<TestResponse>
+  {
+    public string? RequestText { get; set; }
+
+    public int RequestCount { get; set; }
+  }
+
+  public class TestResponse
+  {
+    public string? ResponseText { get; set; }
   }
 }

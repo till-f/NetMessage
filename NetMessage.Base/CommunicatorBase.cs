@@ -160,7 +160,8 @@ namespace NetMessage.Base
     {
       if (!IsConnected)
       {
-        throw new InvalidOperationException("Cannot send when not connected");
+        NotifyError("Cannot send when not connected", null);
+        return Task.FromResult(-1);
       }
 
       var sendTask = RemoteSocket!.SendAsync(new ArraySegment<byte>(rawData), SocketFlags.None);

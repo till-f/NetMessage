@@ -40,7 +40,7 @@ namespace NetMessage.Base.Message
       }
       catch (Exception ex)
       {
-        _notifyError!($"{ex.GetType().Name} while converting to raw format", ex);
+        _notifyError!($"{ex.GetType().Name} while converting/sending response", ex);
         return Task.FromResult(-1);
       }
     }
