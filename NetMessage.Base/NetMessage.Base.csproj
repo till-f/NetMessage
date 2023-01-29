@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\README.NuGet.md" Link="README.NuGet.md" Pack="true" PackagePath="\" />
+    <None Include="README.NuGet.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
