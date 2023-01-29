@@ -40,7 +40,7 @@ namespace NetMessage.Examples.TypeSafe.Client
               break;
             }
             // note that will not be displayed correctly in the console if your system locale is something like English
-            client.SendMessageAsync("Hello in Japanese: こんにちは");
+            client.SendMessageAsync("Hello from Client!");
             break;
           case 'r':
             if (!client.IsConnected)
