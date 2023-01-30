@@ -36,16 +36,24 @@ namespace NetMessage.Base
 
     public override TimeSpan ResponseTimeout
     {
-      get => Server?.ResponseTimeout ?? base.ResponseTimeout;
+      get => Server?.ResponseTimeout ?? Defaults.ResponseTimeout;
       set
       {
         if (Server != null)
         {
           Server.ResponseTimeout = value;
         }
-        else
+      }
+    }    
+    
+    public override bool FailOnFaultedReceiveTask
+    {
+      get => Server?.FailOnFaultedReceiveTask ?? false;
+      set
+      {
+        if (Server != null)
         {
-          base.ResponseTimeout = value;
+          Server.FailOnFaultedReceiveTask = value;
         }
       }
     }

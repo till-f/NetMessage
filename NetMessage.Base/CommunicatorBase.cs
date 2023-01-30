@@ -25,6 +25,13 @@ namespace NetMessage.Base
     public virtual TimeSpan ResponseTimeout { get; set; } = Defaults.ResponseTimeout;
 
     /// <summary>
+    /// If true, the environment/application will be terminated if the receive task faulted. This may
+    /// only happens if a handler of the OnError event fails. The default value is 'false' which means
+    /// that the receive task still dies but the application keeps running.
+    /// </summary>
+    public virtual bool FailOnFaultedReceiveTask { get; set; }
+    
+    /// <summary>
     /// Used to retrieve the remote socket.
     /// </summary>
     protected abstract Socket? RemoteSocket { get; }
@@ -237,8 +244,12 @@ namespace NetMessage.Base
 
       // The receive task is very robust and almost impossible to fail. Any exception is propagated via the OnError event.
       // Only if an exception occurs inside an OnError handler, this exception would stop the receive task more or less silently.
-      // To avoid this, we fail/crash the environment if the task faulted.
-      receiveTask.ContinueWith(c => Environment.FailFast($"Receive task faulted: {c.Exception?.Message}", c.Exception), TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
+      // By default, this is what happens, but the user may set FailOnFaultedReceiveTask='true' to avoid this. In that case, we
+      // fail/crash the environment if the task faulted.
+      if (FailOnFaultedReceiveTask)
+      {
+        receiveTask.ContinueWith(c => Environment.FailFast($"Receive task faulted: {c.Exception?.Message}", c.Exception), TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
+      }
     }
 
     /// <summary>

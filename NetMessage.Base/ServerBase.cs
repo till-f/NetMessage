@@ -39,6 +39,12 @@ namespace NetMessage.Base
     public TimeSpan ResponseTimeout { get; set; } = Defaults.ResponseTimeout;
 
     /// <summary>
+    /// The FailOnFaultedReceiveTask for all sessions.
+    /// See <see cref="CommunicatorBase{TRequest,TProtocol,TData}.FailOnFaultedReceiveTask"/>.
+    /// </summary>
+    public virtual bool FailOnFaultedReceiveTask { get; set; }
+
+    /// <summary>
     /// Called to create a protocol buffer that is used exclusively for one session.
     /// The returned instance must not be used for other sessions.
     /// </summary>
