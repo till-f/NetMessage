@@ -46,6 +46,7 @@ namespace NetMessage.Base
             ResetCancellationToken();
 
             _remoteSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            _remoteSocket.LingerState = new LingerOption(false, 0);  // don't try to send queued data when disconnect is called (but discard)
             _protocolBuffer = CreateProtocolBuffer();
             var connectTask = _remoteSocket.ConnectAsync(remoteHost, remotePort);
             connectTask.Wait();

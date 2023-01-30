@@ -80,6 +80,7 @@ namespace NetMessage.Base
     {
       _cancellationTokenSource.Cancel();
       _receiveTaskStoppedEvent.WaitOne(TimeSpan.FromSeconds(1));
+      RemoteSocket?.Disconnect(false);
       RemoteSocket?.Close();
       RemoteSocket?.Dispose();
       NotifyClosed();
