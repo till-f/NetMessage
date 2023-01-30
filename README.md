@@ -1,19 +1,18 @@
 # NetMessage<br>
+[![NuGet version (NetMessage.Base)](https://img.shields.io/nuget/v/NetMessage.Base.svg?style=flat)](https://www.nuget.org/packages/NetMessage.Base/) [![Build Status](https://tsharpsoftware.visualstudio.com/NetMessage/_apis/build/status/till-f.NetMessage?branchName=main)](https://tsharpsoftware.visualstudio.com/NetMessage/_build/latest?definitionId=1&branchName=main)
+
 **Typesafe and lightweight RPC for .NET**
 
 *NetMessage* is a small, super easy to use RPC and messaging library. The `NetMessageClient` and `NetMessageServer` classes
 provide typesafe communication for any kind of .NET application. All message types are defined by plain C# classes. No
 configuration files, no external tools and no additional dependencies.
 
-|NetMessage     |[![NuGet version (NetMessage)](https://img.shields.io/nuget/v/NetMessage.svg?style=flat)](https://www.nuget.org/packages/NetMessage/)|
-|:--------------|:-|
-|NetMessage.Base|[![NuGet version (NetMessage.Base)](https://img.shields.io/nuget/v/NetMessage.Base.svg?style=flat)](https://www.nuget.org/packages/NetMessage.Base/)|
-|Pipeline       |[![Build Status](https://tsharpsoftware.visualstudio.com/NetMessage/_apis/build/status/till-f.NetMessage?branchName=main)](https://tsharpsoftware.visualstudio.com/NetMessage/_build/latest?definitionId=1&branchName=main)|
 
 ## Quickstart
 
 ### 1. Download
 Get *NetMessage* from [NuGet](https://www.nuget.org/packages/NetMessage/ "NetMessage on NuGet.org").
+
 
 ### 2. Define Data Types
 Create the message, request and response types, for example:
@@ -137,8 +136,9 @@ the original user request object of type `TTData`:
 
 ## Extension
 If you want to use a custom protocol, but still want to take advantage of the event based notifications for messages, requests
-and responses, you will only need the *NetMessage.Base* NuGet package. The basic working principle described above is still valid,
-but the higher layer for transparent (de)serialization of C# objects will not be available.
+and responses, you will only need the [NetMessage.Base](https://www.nuget.org/packages/NetMessage.Base "NetMessage.Base on NuGet.org")
+NuGet package. The basic working principle described above is still valid, but the higher layer for transparent (de)serialization
+of C# objects will not be available.
 
 Using a custom protocol is as simple as implementing the `IProtocol` interface ([IProtocol.cs](NetMessage.Base/IProtocol.cs))
 and adding the corresponding concrete classes for the server, client and session. See the *SimpleString* Example in the
@@ -148,6 +148,7 @@ If you just want to change the way how C# objects are (de)serialized, e.g. if yo
 is implementing the `IDataSerializer` interface ([IDataSerializer.cs](NetMessage/IDataSerializer.cs)) and pass the
 corresponding instance to the `NetMessageServer` and `NetMessageClient` constructor respectively. Take a look at the existing
 implementation for XML in [XmlDataSerializer.cs](NetMessage/XmlDataSerializer.cs) if you need an example.
+
 
 ## Tests
 There is small but strong collection of integration tests, see [here](https://github.com/till-f/NetMessage/tree/main/Tests).
