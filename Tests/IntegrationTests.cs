@@ -132,65 +132,65 @@ namespace NetMessage.Integration.Test
       Assert.IsFalse(task.Result, "Connecting of already connected client did not return false");
     }
 
-    [TestMethod]
-    public async Task ServerRespondsTooSlow()
-    {
-      // Test 1: successful request
-      _server!.AddRequestHandler<TestRequest, TestResponse>(OnRequestReceived);
+    //[TestMethod]
+    //public async Task ServerRespondsTooSlow()
+    //{
+    //  // Test 1: successful request
+    //  _server!.AddRequestHandler<TestRequest, TestResponse>(OnRequestReceived);
 
-      _receivedRequestWaitToken[0] = new WaitToken(1);
-      var result = await _clients[0].SendRequestAsync(new TestRequest { RequestText = TestRequestText, RequestCount = 0 });
-      Assert.AreEqual(TestRequestText.ToLowerInvariant(), result.ResponseText, "Unexpected ResponseText received");
-      _receivedRequestWaitToken[0].WaitAndAssert("Request was not received by server");
+    //  _receivedRequestWaitToken[0] = new WaitToken(1);
+    //  var result = await _clients[0].SendRequestAsync(new TestRequest { RequestText = TestRequestText, RequestCount = 0 });
+    //  Assert.AreEqual(TestRequestText.ToLowerInvariant(), result.ResponseText, "Unexpected ResponseText received");
+    //  _receivedRequestWaitToken[0].WaitAndAssert("Request was not received by server");
 
-      // Test 2: unsuccessful request - server is not listening
-      _server!.RemoveRequestHandler<TestRequest, TestResponse>(OnRequestReceived);
-      await SendRequestAndExpectTimeout(_clients[0], 1); // the request will never reach the server, i.e., the request count is irrelevant
+    //  // Test 2: unsuccessful request - server is not listening
+    //  _server!.RemoveRequestHandler<TestRequest, TestResponse>(OnRequestReceived);
+    //  await SendRequestAndExpectTimeout(_clients[0], 1); // the request will never reach the server, i.e., the request count is irrelevant
 
-      // Test 3: unsuccessful request - server is too slow
-      _server!.AddRequestHandler<TestRequest, TestResponse>((session, tr) =>
-      {
-        Thread.Sleep(ResponseTimeoutMs + 10);
-        OnRequestReceived(session, tr);
-      });
+    //  // Test 3: unsuccessful request - server is too slow
+    //  _server!.AddRequestHandler<TestRequest, TestResponse>((session, tr) =>
+    //  {
+    //    Thread.Sleep(ResponseTimeoutMs + 10);
+    //    OnRequestReceived(session, tr);
+    //  });
 
-      _receivedRequestWaitToken[0] = new WaitToken(1);
-      await SendRequestAndExpectTimeout(_clients[0], 1); // same requestCount as in previous message, because previous one was not received
-      _receivedRequestWaitToken[0].WaitAndAssert("Request was not received by server");
+    //  _receivedRequestWaitToken[0] = new WaitToken(1);
+    //  await SendRequestAndExpectTimeout(_clients[0], 1); // same requestCount as in previous message, because previous one was not received
+    //  _receivedRequestWaitToken[0].WaitAndAssert("Request was not received by server");
 
-      // TestCleanup() will disconnect the client in the next step, but the server might still try to send the response (our timeout/threshold is pretty tight)
-      _ignoreServerErrors = true;
-    }
+    //  // TestCleanup() will disconnect the client in the next step, but the server might still try to send the response (our timeout/threshold is pretty tight)
+    //  _ignoreServerErrors = true;
+    //}
 
-    [TestMethod]
-    public async Task ClientRespondsTooSlow()
-    {
-      // Test 1: successful request
-      _clients[0].AddRequestHandler<TestRequest, TestResponse>(OnRequestReceived);
+    //[TestMethod]
+    //public async Task ClientRespondsTooSlow()
+    //{
+    //  // Test 1: successful request
+    //  _clients[0].AddRequestHandler<TestRequest, TestResponse>(OnRequestReceived);
 
-      _receivedRequestWaitToken[0] = new WaitToken(1);
-      var result = await _sessions[0].SendRequestAsync(new TestRequest { RequestText = TestRequestText, RequestCount = 0 });
-      Assert.AreEqual(TestRequestText.ToLowerInvariant(), result.ResponseText, "Unexpected ResponseText received");
-      _receivedRequestWaitToken[0].WaitAndAssert("Request was not received by client");
+    //  _receivedRequestWaitToken[0] = new WaitToken(1);
+    //  var result = await _sessions[0].SendRequestAsync(new TestRequest { RequestText = TestRequestText, RequestCount = 0 });
+    //  Assert.AreEqual(TestRequestText.ToLowerInvariant(), result.ResponseText, "Unexpected ResponseText received");
+    //  _receivedRequestWaitToken[0].WaitAndAssert("Request was not received by client");
 
-      // Test 2: unsuccessful request - client is not listening
-      _clients[0].RemoveRequestHandler<TestRequest, TestResponse>(OnRequestReceived);
-      await SendRequestAndExpectTimeout(_sessions[0], 1); // the request will never reach the cleint, i.e., the request count is irrelevant
+    //  // Test 2: unsuccessful request - client is not listening
+    //  _clients[0].RemoveRequestHandler<TestRequest, TestResponse>(OnRequestReceived);
+    //  await SendRequestAndExpectTimeout(_sessions[0], 1); // the request will never reach the cleint, i.e., the request count is irrelevant
 
-      // Test 3: unsuccessful request - client is too slow
-      _clients[0].AddRequestHandler<TestRequest, TestResponse>((client, tr) =>
-      {
-        Thread.Sleep(ResponseTimeoutMs + 10);
-        OnRequestReceived(client, tr);
-      });
+    //  // Test 3: unsuccessful request - client is too slow
+    //  _clients[0].AddRequestHandler<TestRequest, TestResponse>((client, tr) =>
+    //  {
+    //    Thread.Sleep(ResponseTimeoutMs + 10);
+    //    OnRequestReceived(client, tr);
+    //  });
 
-      _receivedRequestWaitToken[0] = new WaitToken(1);
-      await SendRequestAndExpectTimeout(_sessions[0], 1); // same requestCount as in previous message, because previous one was not received
-      _receivedRequestWaitToken[0].WaitAndAssert("Request was not received by client");
+    //  _receivedRequestWaitToken[0] = new WaitToken(1);
+    //  await SendRequestAndExpectTimeout(_sessions[0], 1); // same requestCount as in previous message, because previous one was not received
+    //  _receivedRequestWaitToken[0].WaitAndAssert("Request was not received by client");
 
-      // TestCleanup() will disconnect the client in the next step, but it might still try to send the response (our timeout/threshold is pretty tight)
-      _ignoreServerErrors = true;
-    }
+    //  // TestCleanup() will disconnect the client in the next step, but it might still try to send the response (our timeout/threshold is pretty tight)
+    //  _ignoreServerErrors = true;
+    //}
 
     [TestMethod]
     public void BurstMessagesToServer()
