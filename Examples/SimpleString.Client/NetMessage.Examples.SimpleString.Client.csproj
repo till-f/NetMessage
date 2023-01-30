@@ -1,7 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
+    <CheckEolTargetFramework>false</CheckEolTargetFramework>
     <RootNamespace>NetMessage.Examples.SimpleString.Client</RootNamespace>
     <AssemblyName>NetMessage.Examples.SimpleString.Client</AssemblyName>
     <OutputType>Exe</OutputType>
