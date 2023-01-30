@@ -50,10 +50,10 @@ namespace NetMessage.Base
             var connectTask = _remoteSocket.ConnectAsync(remoteHost, remotePort);
             connectTask.Wait();
 
-            if (!connectTask.IsCompleted)
+            if (!connectTask.IsCompleted || connectTask.IsFaulted)
             {
               // should never occur
-              throw new InvalidOperationException("ConnectTask terminated abnormally");
+              throw new InvalidOperationException("Connect task terminated abnormally");
             }
 
             StartReceiveAsync();

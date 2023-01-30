@@ -191,17 +191,17 @@ namespace NetMessage.Base
           try
           {
             ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[RemoteSocket!.ReceiveBufferSize]);
-            var receiveTask = RemoteSocket.ReceiveAsync(buffer, SocketFlags.None);
-            receiveTask.Wait(CancellationToken);
+            var singleReceiveTask = RemoteSocket.ReceiveAsync(buffer, SocketFlags.None);
+            singleReceiveTask.Wait(CancellationToken);
 
-            if (!receiveTask.IsCompleted)
+            if (!singleReceiveTask.IsCompleted || singleReceiveTask.IsFaulted)
             {
               // should never occur
-              throw new InvalidOperationException("ReceiveTask terminated abnormally");
+              throw new InvalidOperationException("Single receive terminated abnormally");
             }
 
-            int byteCount = receiveTask.Result;
-            if (receiveTask.Result == 0)
+            int byteCount = singleReceiveTask.Result;
+            if (singleReceiveTask.Result == 0)
             {
               continue;
             }

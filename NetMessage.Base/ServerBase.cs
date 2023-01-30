@@ -162,16 +162,16 @@ namespace NetMessage.Base
             var acceptTask = _socket.AcceptAsync();
             acceptTask.Wait(_cancellationTokenSource.Token);
 
-            if (!acceptTask.IsCompleted)
+            if (!acceptTask.IsCompleted || acceptTask.IsFaulted)
             {
               // should never occur
-              throw new InvalidOperationException("AcceptTask terminated abnormally");
+              throw new InvalidOperationException("Accept task terminated abnormally");
             }
 
             if (acceptTask.Result == null)
             {
               // should never occur
-              throw new InvalidOperationException("AcceptTask completed but did not return the remote socket");
+              throw new InvalidOperationException("Accept task completed but did not return the remote socket");
             }
 
             var remoteSocket = acceptTask.Result;
