@@ -75,9 +75,9 @@ namespace NetMessage.Base
     public bool IsConnected => RemoteSocket != null && RemoteSocket.Connected;
 
     /// <summary>
-    /// Gracefully closes the connection.
-    /// This call is blocking and the default timeout is <see cref="Defaults.DisconnectTimeout"/>.
-    /// It is ensured that <see cref="Close"/> was called when this method returns.
+    /// Gracefully closes the connection. Does nothing if not connected.
+    /// If connected, this call is blocking with a default timeout: <see cref="Defaults.DisconnectTimeout"/>.
+    /// If connected, it is ensured that <see cref="Close"/> was called when the method returns, i.e. socket is not connected anymore.
     /// </summary>
     public void Disconnect(TimeSpan? timeout = null)
     {
@@ -96,8 +96,8 @@ namespace NetMessage.Base
 
     /// <summary>
     /// Cancels async operations, closes the socket and disposes it.
-    /// It does not wait for async operations to signal completion.
-    /// It does not care about the other endpoint.
+    /// This does not wait for async operations to signal completion.
+    /// This does not gracefully close the connection.
     /// Use <see cref="Disconnect"/> to gracefully close the connection.
     /// </summary>
     public void Close()
