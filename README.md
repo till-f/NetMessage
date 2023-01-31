@@ -1,6 +1,6 @@
 # NetMessage<br>
-[![NuGet version (NetMessage.Base)](https://img.shields.io/nuget/v/NetMessage.Base.svg?style=flat)](https://www.nuget.org/packages/NetMessage.Base/)
-[![Build Status](https://tsharpsoftware.visualstudio.com/NetMessage/_apis/build/status/till-f.NetMessage?branchName=main)](https://tsharpsoftware.visualstudio.com/NetMessage/_build/latest?definitionId=1&branchName=main)
+[![NuGet Download](https://img.shields.io/nuget/v/NetMessage.svg?style=flat)](https://www.nuget.org/packages/NetMessage/)
+[![Build Status](https://img.shields.io/azure-devops/build/tsharpsoftware/netmessage/1/main)](https://tsharpsoftware.visualstudio.com/NetMessage/_build/latest?definitionId=1&branchName=main&view=codecoverage-tab)
 [![Coverage](https://img.shields.io/azure-devops/coverage/tsharpsoftware/netmessage/1/main)](https://tsharpsoftware.visualstudio.com/NetMessage/_build/latest?definitionId=1&branchName=main&view=codecoverage-tab)
 
 **Typesafe and lightweight RPC for .NET**
@@ -138,8 +138,8 @@ the original user request object of type `TTData`:
 
 ## Extension
 If you want to use a custom protocol, but still want to take advantage of the event based notifications for messages, requests
-and responses, you will only need the [NetMessage.Base](https://www.nuget.org/packages/NetMessage.Base "NetMessage.Base on NuGet.org")
-NuGet package. The basic working principle described above is still valid, but the higher layer for transparent (de)serialization
+and responses, you will only need the *NetMessage.Base* [NuGet package](https://www.nuget.org/packages/NetMessage.Base "NetMessage.Base on NuGet.org").
+The basic working principle described above is still valid, but the higher layer for transparent (de)serialization
 of C# objects will not be available.
 
 Using a custom protocol is as simple as implementing the `IProtocol` interface ([IProtocol.cs](NetMessage.Base/IProtocol.cs))
