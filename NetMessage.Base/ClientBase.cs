@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 
 namespace NetMessage.Base
 {
-  public abstract class ClientBase<TClient, TRequest, TProtocol, TPld> : CommunicatorBase<TRequest, TProtocol, TPld>
-    where TClient : ClientBase<TClient, TRequest, TProtocol, TPld>
-    where TRequest : Request<TRequest, TProtocol, TPld>
-    where TProtocol : class, IProtocol<TPld>
+  public abstract class ClientBase<TClient, TRequest, TProtocol, TData> : CommunicatorBase<TRequest, TProtocol, TData>
+    where TClient : ClientBase<TClient, TRequest, TProtocol, TData>
+    where TRequest : Request<TRequest, TProtocol, TData>
+    where TProtocol : class, IProtocol<TData>
   {
     private Socket? _remoteSocket;
     private TProtocol? _protocolBuffer;
@@ -16,7 +16,7 @@ namespace NetMessage.Base
     public event Action<TClient>? Connected;
     public event Action<TClient>? Disconnected;
     public event Action<TClient, string, Exception?>? OnError;
-    public event Action<TClient, Message<TPld>>? MessageReceived;
+    public event Action<TClient, Message<TData>>? MessageReceived;
     public event Action<TClient, TRequest>? RequestReceived;
 
     /// <summary>
@@ -43,17 +43,18 @@ namespace NetMessage.Base
               return false;
             }
 
-            ResetCancellationToken();
+            ResetConnectionState();
 
             _remoteSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            _remoteSocket.LingerState = new LingerOption(true, 0);  // discard queued data when disconnect and reset the connection
             _protocolBuffer = CreateProtocolBuffer();
             var connectTask = _remoteSocket.ConnectAsync(remoteHost, remotePort);
             connectTask.Wait();
 
-            if (!connectTask.IsCompleted)
+            if (!connectTask.IsCompleted || connectTask.IsFaulted)
             {
               // should never occur
-              throw new InvalidOperationException("ConnectTask terminated abnormally");
+              throw new InvalidOperationException("Connect task terminated abnormally");
             }
 
             StartReceiveAsync();
@@ -65,23 +66,19 @@ namespace NetMessage.Base
         }
         catch (Exception ex)
         {
-          HandleException(ex);
+          // CancellationToken was triggered. This is not an error (do not notify about it)
+          if (ex is OperationCanceledException)
+          {
+            return false;
+          }
+
+          NotifyError($"{ex.GetType().Name} when connecting: {ex.Message}", ex);
           return false;
         }
       });
     }
 
-    public void Disconnect()
-    {
-      if (!IsConnected)
-      {
-        return;
-      }
-
-      Close();
-    }
-
-    protected override void HandleMessage(Message<TPld> message)
+    protected override void HandleMessage(Message<TData> message)
     {
       MessageReceived?.Invoke((TClient)this, message);
     }

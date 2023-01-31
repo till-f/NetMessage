@@ -3,9 +3,9 @@ using System.Threading.Tasks;
 
 namespace NetMessage
 {
-  public class NetMessageSession : SessionBase<NetMessageServer, NetMessageSession, TypedRequestInternal, TypedProtocol, TypedPayload>
+  public class NetMessageSession : SessionBase<NetMessageServer, NetMessageSession, TypedRequestInternal, TypedProtocol, TypedDataString>
   {
-    private IPayloadSerializer? _payloadConverter;
+    private IDataSerializer? _dataSerializer;
 
     /// <summary>
     /// Converts the message to its raw format and sends it to the remote socket.
@@ -15,16 +15,16 @@ namespace NetMessage
     public Task<int> SendMessageAsync(object message)
     {
       string typeId = message.GetType().FullName;
-      string serialized = _payloadConverter!.Serialize(message);
-      return SendMessageInternalAsync(new TypedPayload(typeId, serialized));
+      string serialized = _dataSerializer!.Serialize(message);
+      return SendMessageInternalAsync(new TypedDataString(typeId, serialized));
     }
 
     // TODO: return Task<TRsp?> here (requires language version 9.0+)
     public async Task<TTRsp> SendRequestAsync<TTRsp>(IRequest<TTRsp> request)
     {
       string typeId = request.GetType().FullName;
-      string serialized = _payloadConverter!.Serialize(request);
-      var result = await SendRequestInternalAsync(new TypedPayload(typeId, serialized));
+      string serialized = _dataSerializer!.Serialize(request);
+      var result = await SendRequestInternalAsync(new TypedDataString(typeId, serialized));
 
       // result is null if task was cancelled normally (abnormal cancellations or failures will throw)
       if (result == null)
@@ -34,12 +34,12 @@ namespace NetMessage
 #pragma warning restore CS8603
       }
 
-      return _payloadConverter.Deserialize<TTRsp>(result.Payload.ActualPayload);
+      return _dataSerializer.Deserialize<TTRsp>(result.Data.DataString);
     }
 
-    internal void Init(IPayloadSerializer payloadConverter)
+    internal void Init(IDataSerializer dataSerializer)
     {
-      _payloadConverter = payloadConverter;
+      _dataSerializer = dataSerializer;
     }
   }
 }

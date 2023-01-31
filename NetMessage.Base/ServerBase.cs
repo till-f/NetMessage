@@ -9,22 +9,22 @@ using System.Threading.Tasks;
 
 namespace NetMessage.Base
 {
-  public abstract class ServerBase<TServer, TSession, TRequest, TProtocol, TPld> : IDisposable
-    where TServer : ServerBase<TServer, TSession, TRequest, TProtocol, TPld>
-    where TSession : SessionBase<TServer, TSession, TRequest, TProtocol, TPld>, new()
-    where TRequest : Request<TRequest, TProtocol, TPld>
-    where TProtocol : class, IProtocol<TPld>
+  public abstract class ServerBase<TServer, TSession, TRequest, TProtocol, TData> : IDisposable
+    where TServer : ServerBase<TServer, TSession, TRequest, TProtocol, TData>
+    where TSession : SessionBase<TServer, TSession, TRequest, TProtocol, TData>, new()
+    where TRequest : Request<TRequest, TProtocol, TData>
+    where TProtocol : class, IProtocol<TData>
   {
     private readonly Dictionary<Guid, TSession> _sessions = new Dictionary<Guid, TSession>();
     private readonly IPEndPoint _endPoint;
 
-    private Socket? _socket;
+    private Socket? _listenSocket;
     private CancellationTokenSource? _cancellationTokenSource;
 
     public event Action<TSession>? SessionOpened;
     public event Action<TSession>? SessionClosed;
     public event Action<TServer, TSession?, string, Exception?>? OnError;
-    public event Action<TSession, Message<TPld>>? MessageReceived;
+    public event Action<TSession, Message<TData>>? MessageReceived;
     public event Action<TSession, TRequest>? RequestReceived;
 
     protected ServerBase(int listeningPort)
@@ -34,9 +34,15 @@ namespace NetMessage.Base
 
     /// <summary>
     /// The ResponseTimeout used for all sessions.
-    /// See <see cref="CommunicatorBase{TRequest, TProtocol, TPld}.ResponseTimeout"/>.
+    /// See <see cref="CommunicatorBase{TRequest, TProtocol, TData}.ResponseTimeout"/>.
     /// </summary>
-    public TimeSpan ResponseTimeout { get; set; }
+    public TimeSpan ResponseTimeout { get; set; } = Defaults.ResponseTimeout;
+
+    /// <summary>
+    /// The FailOnFaultedReceiveTask for all sessions.
+    /// See <see cref="CommunicatorBase{TRequest,TProtocol,TData}.FailOnFaultedReceiveTask"/>.
+    /// </summary>
+    public virtual bool FailOnFaultedReceiveTask { get; set; }
 
     /// <summary>
     /// Called to create a protocol buffer that is used exclusively for one session.
@@ -52,44 +58,44 @@ namespace NetMessage.Base
 
     public void Start()
     {
-      if (_socket != null)
+      if (_listenSocket != null)
       {
         return;
       }
 
       _cancellationTokenSource = new CancellationTokenSource();
-      _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-      _socket.Bind(_endPoint);
+      _listenSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+      _listenSocket.Bind(_endPoint);
       try
       {
-        _socket.Listen(10);
+        _listenSocket.Listen(10);
       }
       catch (Exception ex)
       {
         OnError?.Invoke((TServer)this, null, "Could not start listening on socket", ex);
-        _socket.Dispose();
-        _socket = null;
+        _listenSocket.Dispose();
+        _listenSocket = null;
       }
       AcceptConnectionsAsync();
     }
 
     public void Stop()
     {
-      if (_socket == null)
+      if (_listenSocket == null)
       {
         return;
       }
 
+      _cancellationTokenSource!.Cancel();
+      _listenSocket.Close();
+      _listenSocket.Dispose();
+      _listenSocket = null;
+
       lock (_sessions)
       {
-        _cancellationTokenSource!.Cancel();
-        _socket?.Close();
-        _socket?.Dispose();
-        _socket = null;
-
         foreach (var kvp in _sessions.ToArray())
         {
-          kvp.Value.Close();
+          kvp.Value.Disconnect();
           _sessions.Remove(kvp.Key);
         }
       }
@@ -129,7 +135,7 @@ namespace NetMessage.Base
       SessionClosed?.Invoke(session);
     }
 
-    internal void NotifyMessagesReceived(TSession session, Message<TPld> message)
+    internal void NotifyMessagesReceived(TSession session, Message<TData> message)
     {
       MessageReceived?.Invoke(session, message);
     }
@@ -148,24 +154,24 @@ namespace NetMessage.Base
           TSession? session = null;
           try
           {
-            if (_socket == null)
+            if (_listenSocket == null)
             {
               return;
             }
 
-            var acceptTask = _socket.AcceptAsync();
+            var acceptTask = _listenSocket.AcceptAsync();
             acceptTask.Wait(_cancellationTokenSource.Token);
 
-            if (!acceptTask.IsCompleted)
+            if (!acceptTask.IsCompleted || acceptTask.IsFaulted)
             {
               // should never occur
-              throw new InvalidOperationException("AcceptTask terminated abnormally");
+              throw new InvalidOperationException("Accept task terminated abnormally");
             }
 
             if (acceptTask.Result == null)
             {
               // should never occur
-              throw new InvalidOperationException("AcceptTask completed but did not return the remote socket");
+              throw new InvalidOperationException("Accept task completed but did not return the remote socket");
             }
 
             var remoteSocket = acceptTask.Result;

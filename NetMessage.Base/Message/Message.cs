@@ -1,15 +1,15 @@
 ﻿namespace NetMessage.Base.Message
 {
-  public class Message<TPld> : IMessage<TPld>
+  public class Message<TData> : IPacket<TData>
   {
     /// <summary>
     /// Container for a message (in contrast to response and request)
     /// </summary>
-    public Message(TPld payload)
+    public Message(TData data)
     {
-      Payload = payload;
+      Data = data;
     }
 
-    public TPld Payload { get; }
+    public TData Data { get; }
   }
 }

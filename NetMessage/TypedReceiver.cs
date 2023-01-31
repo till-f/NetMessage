@@ -12,46 +12,46 @@ namespace NetMessage
   /// appropriate handler.
   /// </summary>
   public class TypedReceiver<TCommunicator, TRequest, TProtocol>
-    where TCommunicator : CommunicatorBase<TRequest, TProtocol, TypedPayload>
-    where TRequest : Request<TRequest, TProtocol, TypedPayload>
-    where TProtocol : class, IProtocol<TypedPayload>
+    where TCommunicator : CommunicatorBase<TRequest, TProtocol, TypedDataString>
+    where TRequest : Request<TRequest, TProtocol, TypedDataString>
+    where TProtocol : class, IProtocol<TypedDataString>
   {
     private readonly Dictionary<string, List<TypedMessageHandler<TCommunicator, TRequest, TProtocol>>> _messageHandlers = new Dictionary<string, List<TypedMessageHandler<TCommunicator, TRequest, TProtocol>>>();
     private readonly Dictionary<string, List<TypedRequestHandler<TCommunicator, TRequest, TProtocol>>> _requestHandlers = new Dictionary<string, List<TypedRequestHandler<TCommunicator, TRequest, TProtocol>>>();
-    private readonly IPayloadSerializer _payloadConverter;
+    private readonly IDataSerializer _dataSerializer;
 
-    public TypedReceiver(IPayloadSerializer payloadConverter)
+    public TypedReceiver(IDataSerializer dataSerializer)
     {
-      _payloadConverter = payloadConverter;
+      _dataSerializer = dataSerializer;
     }
 
-    public void AddMessageHandler<TTPld>(Action<TCommunicator, TTPld> messageHandler)
+    public void AddMessageHandler<TTData>(Action<TCommunicator, TTData> messageHandler)
     {
-      var internalMessageHandler = new TypedMessageHandler<TCommunicator, TRequest, TProtocol, TTPld>(_payloadConverter, messageHandler);
-      AddHandler(_messageHandlers, typeof(TTPld), internalMessageHandler);
+      var internalMessageHandler = new TypedMessageHandler<TCommunicator, TRequest, TProtocol, TTData>(_dataSerializer, messageHandler);
+      AddHandler(_messageHandlers, typeof(TTData), internalMessageHandler);
     }
 
-    public void RemoveMessageHandler<TTPld>(Action<TCommunicator, TTPld> messageHandler)
+    public void RemoveMessageHandler<TTData>(Action<TCommunicator, TTData> messageHandler)
     {
-      RemoveHandler(_messageHandlers, typeof(TTPld), messageHandler);
+      RemoveHandler(_messageHandlers, typeof(TTData), messageHandler);
     }
 
-    public void AddRequestHandler<TTPld, TTRsp>(Action<TCommunicator, TypedRequest<TTPld, TTRsp>> requestHandler)
-      where TTPld : IRequest<TTRsp>
+    public void AddRequestHandler<TTData, TTRsp>(Action<TCommunicator, TypedRequest<TTData, TTRsp>> requestHandler)
+      where TTData : IRequest<TTRsp>
     {
-      var internalRequestHandler = new TypedRequestHandler<TCommunicator, TRequest, TProtocol, TTPld, TTRsp>(_payloadConverter, requestHandler);
-      AddHandler(_requestHandlers, typeof(TTPld), internalRequestHandler);
+      var internalRequestHandler = new TypedRequestHandler<TCommunicator, TRequest, TProtocol, TTData, TTRsp>(_dataSerializer, requestHandler);
+      AddHandler(_requestHandlers, typeof(TTData), internalRequestHandler);
     }
 
-    public void RemoveRequestHandler<TTPld, TTRsp>(Action<TCommunicator, TypedRequest<TTPld, TTRsp>> requestHandler)
-      where TTPld : IRequest<TTRsp>
+    public void RemoveRequestHandler<TTData, TTRsp>(Action<TCommunicator, TypedRequest<TTData, TTRsp>> requestHandler)
+      where TTData : IRequest<TTRsp>
     {
-      RemoveHandler(_requestHandlers, typeof(TTPld), requestHandler);
+      RemoveHandler(_requestHandlers, typeof(TTData), requestHandler);
     }
 
-    internal void NotifyMessageReceived(TCommunicator communicator, Message<TypedPayload> message)
+    internal void NotifyMessageReceived(TCommunicator communicator, Message<TypedDataString> message)
     {
-      var typeId = message.Payload.TypeId;
+      var typeId = message.Data.TypeId;
 
       if (_messageHandlers.ContainsKey(typeId))
       {
@@ -61,7 +61,7 @@ namespace NetMessage
 
     internal void NotifyRequestReceived(TCommunicator communicator, TypedRequestInternal request)
     {
-      var typeId = request.Payload.TypeId;
+      var typeId = request.Data.TypeId;
 
       if (_requestHandlers.ContainsKey(typeId))
       {

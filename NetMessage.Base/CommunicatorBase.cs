@@ -7,13 +7,15 @@ using System.Threading.Tasks;
 
 namespace NetMessage.Base
 {
-  public abstract class CommunicatorBase<TRequest, TProtocol, TPld> : IDisposable
-    where TRequest : Request<TRequest, TProtocol, TPld>
-    where TProtocol : class, IProtocol<TPld>
+  public abstract class CommunicatorBase<TRequest, TProtocol, TData> : IDisposable
+    where TRequest : Request<TRequest, TProtocol, TData>
+    where TProtocol : class, IProtocol<TData>
   {
-    private readonly ConcurrentDictionary<int, ResponseEvent<TPld>> _responseEvents = new ConcurrentDictionary<int, ResponseEvent<TPld>>();
+    private readonly ConcurrentDictionary<int, ResponseEvent<TData>> _responseEvents = new ConcurrentDictionary<int, ResponseEvent<TData>>();
+    private readonly ManualResetEvent _disconnectionFinishedEvent = new ManualResetEvent(true);
 
     private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+    private bool _isClosing;
     private int _responseIdCounter;
 
     /// <summary>
@@ -21,8 +23,15 @@ namespace NetMessage.Base
     /// Use a TimeSpan that represents -1 millisecond to wait indefinitely.
     /// The default value is 10 seconds.
     /// </summary>
-    public virtual TimeSpan ResponseTimeout { get; set; } = TimeSpan.FromSeconds(10);
+    public virtual TimeSpan ResponseTimeout { get; set; } = Defaults.ResponseTimeout;
 
+    /// <summary>
+    /// If true, the environment/application will be terminated if the receive task faulted. This may
+    /// only happens if a handler of the OnError event fails. The default value is 'false' which means
+    /// that the receive task still dies but the application keeps running.
+    /// </summary>
+    public virtual bool FailOnFaultedReceiveTask { get; set; }
+    
     /// <summary>
     /// Used to retrieve the remote socket.
     /// </summary>
@@ -47,7 +56,7 @@ namespace NetMessage.Base
     /// <summary>
     /// Called for every message received.
     /// </summary>
-    protected abstract void HandleMessage(Message<TPld> message);
+    protected abstract void HandleMessage(Message<TData> message);
 
     /// <summary>
     /// Called for every request received.
@@ -56,7 +65,7 @@ namespace NetMessage.Base
 
     /// <summary>
     /// Retrieves the cancellation token. It is set when close is requested.
-    /// It can be reset by calling <see cref="ResetCancellationToken"/>.
+    /// It can be reset by calling <see cref="ResetConnectionState"/>.
     /// </summary>
     protected CancellationToken CancellationToken => _cancellationTokenSource.Token;
 
@@ -66,28 +75,61 @@ namespace NetMessage.Base
     public bool IsConnected => RemoteSocket != null && RemoteSocket.Connected;
 
     /// <summary>
+    /// Gracefully closes the connection. Does nothing if not connected.
+    /// If connected, this call is blocking with a default timeout: <see cref="Defaults.DisconnectTimeout"/>.
+    /// If connected, it is ensured that <see cref="Close"/> was called when the method returns, i.e. socket is not connected anymore.
+    /// </summary>
+    public void Disconnect(TimeSpan? timeout = null)
+    {
+      if (IsConnected)
+      {
+        _disconnectionFinishedEvent.Reset();
+        RemoteSocket?.Shutdown(SocketShutdown.Send);
+        var result = _disconnectionFinishedEvent.WaitOne(timeout ?? Defaults.DisconnectTimeout);
+        if (!result)
+        {
+          NotifyError("Timeout while waiting for the acknowledgement of disconnect", null);
+          Close();
+        }
+      }
+    }
+
+    /// <summary>
     /// Cancels async operations, closes the socket and disposes it.
+    /// This does not wait for async operations to signal completion.
+    /// This does not gracefully close the connection.
+    /// Use <see cref="Disconnect"/> to gracefully close the connection.
     /// </summary>
     public void Close()
     {
+      if (_isClosing)
+      {
+        return;
+      }
+      _isClosing = true;
+
       _cancellationTokenSource.Cancel();
       RemoteSocket?.Close();
       RemoteSocket?.Dispose();
+
+      _disconnectionFinishedEvent.Set();
       NotifyClosed();
     }
 
     /// <summary>
-    /// Resets the CancellationToken so that communication can be cancelled again.
-    /// Can only be called when communication is inactive (socket not connected).
+    /// Resets the state so that connection can be closed again.
+    /// This resets _isClosing and _cancellationTokenSource.
+    /// Must not be called when communication is active (socket already connected).
     /// </summary>
-    protected void ResetCancellationToken()
+    protected void ResetConnectionState()
     {
       if (IsConnected)
       {
-        NotifyError("Cannot reset CancellationToken because socket is connected", null);
+        NotifyError("Cannot reset connection because socket is connected", null);
         return;
       }
 
+      _isClosing = false;
       _cancellationTokenSource = new CancellationTokenSource();
     }
 
@@ -98,9 +140,9 @@ namespace NetMessage.Base
     /// 
     /// Protected because concrete implementations may prefer that this method is not exposed.
     /// </summary>
-    protected Task<int> SendMessageInternalAsync(TPld messagePayload)
+    protected Task<int> SendMessageInternalAsync(TData data)
     {
-      var rawData = ProtocolBuffer!.ToRawMessage(messagePayload);
+      var rawData = ProtocolBuffer!.ToRawMessage(data);
       return SendRawDataAsync(rawData);
     }
 
@@ -108,7 +150,7 @@ namespace NetMessage.Base
     /// Sends request to the remote socket and awaits the corresponding response.
     /// Protected because concrete implementations may prefer that this method is not exposed.
     /// </summary>
-    protected async Task<Response<TPld>?> SendRequestInternalAsync(TPld requestPayload)
+    protected async Task<Response<TData>?> SendRequestInternalAsync(TData data)
     {
       int responseId;
       lock (_responseEvents)
@@ -119,7 +161,7 @@ namespace NetMessage.Base
       byte[] rawData;
       try
       {
-        rawData = ProtocolBuffer!.ToRawRequest(requestPayload, responseId);
+        rawData = ProtocolBuffer!.ToRawRequest(data, responseId);
       }
       catch (Exception ex)
       {
@@ -128,7 +170,7 @@ namespace NetMessage.Base
       }
 
       var waitToken = new ManualResetEventSlim(false);
-      var responseEvent = new ResponseEvent<TPld>(waitToken);
+      var responseEvent = new ResponseEvent<TData>(waitToken);
       _responseEvents[responseId] = responseEvent;
 
       var sendResult = await SendRawDataAsync(rawData);
@@ -160,7 +202,8 @@ namespace NetMessage.Base
     {
       if (!IsConnected)
       {
-        throw new InvalidOperationException("Cannot send when not connected");
+        NotifyError("Cannot send when not connected", null);
+        return Task.FromResult(-1);
       }
 
       var sendTask = RemoteSocket!.SendAsync(new ArraySegment<byte>(rawData), SocketFlags.None);
@@ -178,20 +221,25 @@ namespace NetMessage.Base
         {
           try
           {
-            ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[RemoteSocket!.ReceiveBufferSize]);
-            var receiveTask = RemoteSocket.ReceiveAsync(buffer, SocketFlags.None);
-            receiveTask.Wait(CancellationToken);
+            var buffer = new ArraySegment<byte>(new byte[RemoteSocket!.ReceiveBufferSize]);
+            var singleReceiveTask = RemoteSocket.ReceiveAsync(buffer, SocketFlags.None);
+            singleReceiveTask.Wait(CancellationToken);
 
-            if (!receiveTask.IsCompleted)
+            if (!singleReceiveTask.IsCompleted || singleReceiveTask.IsFaulted)
             {
               // should never occur
-              throw new InvalidOperationException("ReceiveTask terminated abnormally");
+              throw new InvalidOperationException("Single receive terminated abnormally");
             }
 
-            int byteCount = receiveTask.Result;
-            if (receiveTask.Result == 0)
+            var byteCount = singleReceiveTask.Result;
+
+            if (byteCount == 0)
             {
-              continue;
+              // successful completion of a zero-byte receive operation indicates graceful closure of remote socket
+              RemoteSocket.Shutdown(SocketShutdown.Both);
+              RemoteSocket.Disconnect(false);
+              Close();
+              return;
             }
 
             var rawData = new byte[byteCount];
@@ -199,7 +247,7 @@ namespace NetMessage.Base
             var receivedMessages = ProtocolBuffer!.FromRaw(rawData);
             foreach (var messageInfo in receivedMessages)
             {
-              if (messageInfo is Message<TPld> message)
+              if (messageInfo is Message<TData> message)
               {
                 HandleMessage(message);
               }
@@ -209,10 +257,10 @@ namespace NetMessage.Base
                   (msg, id) => ProtocolBuffer!.ToRawResponse(msg, id),
                   SendRawDataAsync,
                   NotifyError
-                  );
+                );
                 HandleRequest(request);
               }
-              else if (messageInfo is Response<TPld> response)
+              else if (messageInfo is Response<TData> response)
               {
                 var responseEvent = _responseEvents[response.ResponseId];
                 _responseEvents.TryRemove(response.ResponseId, out _);
@@ -223,53 +271,47 @@ namespace NetMessage.Base
           }
           catch (Exception ex)
           {
-            if (HandleException(ex)) return;
+            if (HandleReceiveException(ex)) return;
           }
         }
       }, CancellationToken);
 
       // The receive task is very robust and almost impossible to fail. Any exception is propagated via the OnError event.
       // Only if an exception occurs inside an OnError handler, this exception would stop the receive task more or less silently.
-      // To avoid this, we fail/crash the environment if the task faulted.
-      receiveTask.ContinueWith(c => Environment.FailFast($"Receive task faulted: {c.Exception?.Message}", c.Exception), TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
+      // By default, this is what happens, but the user may set FailOnFaultedReceiveTask='true' to avoid this. In that case, we
+      // fail/crash the environment if the task faulted.
+      receiveTask.ContinueWith(c =>
+      {
+        if (FailOnFaultedReceiveTask)
+        {
+          Environment.FailFast($"Receive task faulted: {c.Exception?.Message}", c.Exception);
+        }
+      }, TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
     }
 
     /// <summary>
-    /// Handler for exceptions in the async background tasks.
-    /// Returns true to indicate that task should be aborted.
+    /// Handler for exceptions in the async receive tasks.
+    /// Returns true to indicate that the receive should be aborted.
     /// </summary>
-    protected bool HandleException(Exception ex)
+    protected bool HandleReceiveException(Exception ex)
     {
-      // CancellationToken was triggered. This is NOT an error (do not notify about it)
+      // CancellationToken was triggered. This is not an error (do not notify about it)
       if (ex is OperationCanceledException)
       {
         return true;
       }
 
+      // Socket exception occurred. In this case, we consider the connection unhealthy and we close it.
+      // FUTURE: depending on kind of error, try automatic reconnect / restoring the connection
       if (ex.InnerException is SocketException se)
       {
-        if (se.SocketErrorCode != SocketError.ConnectionReset)
-        {
-          NotifyError($"Socket Error {se.SocketErrorCode}", se);
-        }
-
-        // TODO: depending on kind of error, Close or try to Reconnect
+        NotifyError($"Unexpected socket error in receive task: {se.SocketErrorCode}", se);
         Close();
         return true;
       }
 
-      NotifyError($"Unexpected {ex.GetType().Name}", ex);
-
-      // It is possible that the connection was closed after the wait completed, but before next wait started.
-      // In that case, a NullReferenceException (or similar) might be thrown because the RemoteSocket is not
-      // functional. This case is detected by checking IsCancellationRequested again. If it was requested,
-      // ignore the error.
-      if (CancellationToken.IsCancellationRequested)
-      {
-        Console.WriteLine($"DEBUG: Exception above was thrown after cancellation was requested!");
-        return true;
-      }
-
+      // Another exception occurred. In this case, the connection should still be usable.
+      NotifyError($"Unexpected {ex.GetType().Name} in receive task: {ex.Message}", ex);
       return false;
     }
 

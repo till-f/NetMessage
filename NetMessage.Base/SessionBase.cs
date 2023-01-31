@@ -5,11 +5,11 @@ using System.Net.Sockets;
 
 namespace NetMessage.Base
 {
-  public abstract class SessionBase<TServer, TSession, TRequest, TProtocol, TPld> : CommunicatorBase<TRequest, TProtocol, TPld>
-    where TServer : ServerBase<TServer, TSession, TRequest, TProtocol, TPld>
-    where TSession : SessionBase<TServer, TSession, TRequest, TProtocol, TPld>, new()
-    where TRequest : Request<TRequest, TProtocol, TPld>
-    where TProtocol : class, IProtocol<TPld>
+  public abstract class SessionBase<TServer, TSession, TRequest, TProtocol, TData> : CommunicatorBase<TRequest, TProtocol, TData>
+    where TServer : ServerBase<TServer, TSession, TRequest, TProtocol, TData>
+    where TSession : SessionBase<TServer, TSession, TRequest, TProtocol, TData>, new()
+    where TRequest : Request<TRequest, TProtocol, TData>
+    where TProtocol : class, IProtocol<TData>
   {
     private Socket? _remoteSocket;
     private TProtocol? _protocolBuffer;
@@ -23,6 +23,7 @@ namespace NetMessage.Base
     {
       Server = server;
       _remoteSocket = remoteSocket;
+      _remoteSocket.LingerState = new LingerOption(true, 0);  // discard queued data when disconnect and reset the connection
       _protocolBuffer = protocolBuffer;
       RemoteEndPoint = (IPEndPoint)_remoteSocket.RemoteEndPoint;
       StartReceiveAsync();
@@ -36,16 +37,24 @@ namespace NetMessage.Base
 
     public override TimeSpan ResponseTimeout
     {
-      get => Server?.ResponseTimeout ?? base.ResponseTimeout;
+      get => Server?.ResponseTimeout ?? Defaults.ResponseTimeout;
       set
       {
         if (Server != null)
         {
           Server.ResponseTimeout = value;
         }
-        else
+      }
+    }    
+    
+    public override bool FailOnFaultedReceiveTask
+    {
+      get => Server?.FailOnFaultedReceiveTask ?? false;
+      set
+      {
+        if (Server != null)
         {
-          base.ResponseTimeout = value;
+          Server.FailOnFaultedReceiveTask = value;
         }
       }
     }
@@ -54,7 +63,7 @@ namespace NetMessage.Base
 
     protected override TProtocol? ProtocolBuffer => _protocolBuffer;
 
-    protected override void HandleMessage(Message<TPld> message)
+    protected override void HandleMessage(Message<TData> message)
     {
       Server!.NotifyMessagesReceived((TSession)this, message);
     }

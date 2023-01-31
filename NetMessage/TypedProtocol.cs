@@ -13,14 +13,14 @@ namespace NetMessage
   /// The protocol supports the request/response mechanism.
   /// 
   /// The end of a message is determined by a termination sequence ( <see cref="Terminator"/>)
-  /// which must not be contained in the payload (no escaping is applied by the protocol).
+  /// which must not be contained in the transferred data (no escaping is applied by the protocol).
   /// </summary>
   //
   // Raw message string format:
-  // Message   TypeId::Payload
-  // Request   >TypeId:ResonseId:Payload
-  // Response  <TypeId:ResonseId:Payload
-  public class TypedProtocol : IProtocol<TypedPayload>
+  // Message   TypeId::DataString
+  // Request   >TypeId:RequestId:DataString
+  // Response  <TypeId:ResonseId:DataString
+  public class TypedProtocol : IProtocol<TypedDataString>
   {
     public const string DefaultTerminator = "\u0004";
 
@@ -40,9 +40,9 @@ namespace NetMessage
     /// </summary>
     public string Terminator { get; set; } = DefaultTerminator;
 
-    public IList<IMessage<TypedPayload>> FromRaw(byte[] rawData)
+    public IList<IPacket<TypedDataString>> FromRaw(byte[] rawData)
     {
-      var messages = new List<IMessage<TypedPayload>>();
+      var messages = new List<IPacket<TypedDataString>>();
 
       var text = Encoding.GetString(rawData);
 
@@ -68,7 +68,7 @@ namespace NetMessage
       return messages;
     }
 
-    private IMessage<TypedPayload> ParseMessage(string rawString)
+    private IPacket<TypedDataString> ParseMessage(string rawString)
     {
       EMessageKind messageKind;
       switch (rawString[0])
@@ -106,43 +106,43 @@ namespace NetMessage
         idField = int.Parse(rawString.Substring(sepIdx1 + 1, sepIdx2 - sepIdx1 - 1));
       }
 
-      string payload;
+      string dataString;
       if (sepIdx2 < rawString.Length - 1)
       {
-        payload = rawString.Substring(sepIdx2 + 1);
+        dataString = rawString.Substring(sepIdx2 + 1);
       }
       else
       {
-        payload = string.Empty;
+        dataString = string.Empty;
       }
 
       switch (messageKind)
       {
         case EMessageKind.Request:
-          return new TypedRequestInternal(new TypedPayload(typeField, payload), idField);
+          return new TypedRequestInternal(new TypedDataString(typeField, dataString), idField);
         case EMessageKind.Response:
-          return new Response<TypedPayload>(new TypedPayload(typeField, payload), idField);
+          return new Response<TypedDataString>(new TypedDataString(typeField, dataString), idField);
         default:
-          return new Message<TypedPayload>(new TypedPayload(typeField, payload));
+          return new Message<TypedDataString>(new TypedDataString(typeField, dataString));
       }
     }
 
-    public byte[] ToRawMessage(TypedPayload payload)
+    public byte[] ToRawMessage(TypedDataString typesDataString)
     {
-      return ToRaw(EMessageKind.Message, payload, -1);
+      return ToRaw(EMessageKind.Message, typesDataString, -1);
     }
 
-    public byte[] ToRawRequest(TypedPayload payload, int requestId)
+    public byte[] ToRawRequest(TypedDataString typesDataString, int requestId)
     {
-      return ToRaw(EMessageKind.Request, payload, requestId);
+      return ToRaw(EMessageKind.Request, typesDataString, requestId);
     }
 
-    public byte[] ToRawResponse(TypedPayload payload, int responseId)
+    public byte[] ToRawResponse(TypedDataString typesDataString, int responseId)
     {
-      return ToRaw(EMessageKind.Response, payload, responseId);
+      return ToRaw(EMessageKind.Response, typesDataString, responseId);
     }
 
-    private byte[] ToRaw(EMessageKind messageKind, TypedPayload payload, int id)
+    private byte[] ToRaw(EMessageKind messageKind, TypedDataString typesDataString, int id)
     {
       string messageKindToken;
       switch (messageKind)
@@ -164,11 +164,11 @@ namespace NetMessage
 
       var sb = new StringBuilder();
       sb.Append(messageKindToken);
-      sb.Append(payload.TypeId);
+      sb.Append(typesDataString.TypeId);
       sb.Append(SeparatorToken);
       sb.Append(responseIdString);
       sb.Append(SeparatorToken);
-      sb.Append(payload.ActualPayload);
+      sb.Append(typesDataString.DataString);
       sb.Append(Terminator);
 
       return Encoding.GetBytes(sb.ToString());

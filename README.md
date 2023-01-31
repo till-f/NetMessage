@@ -1,6 +1,5 @@
 # NetMessage<br>
-[![NuGet version (NetMessage)](https://img.shields.io/nuget/v/NetMessage.svg?style=flat-square)](https://www.nuget.org/packages/NetMessage/)
-[![Build Status](https://tsharpsoftware.visualstudio.com/NetMessage/_apis/build/status/till-f.NetMessage?branchName=main)](https://tsharpsoftware.visualstudio.com/NetMessage/_build/latest?definitionId=1&branchName=main)
+[![NuGet version (NetMessage.Base)](https://img.shields.io/nuget/v/NetMessage.Base.svg?style=flat)](https://www.nuget.org/packages/NetMessage.Base/) [![Build Status](https://tsharpsoftware.visualstudio.com/NetMessage/_apis/build/status/till-f.NetMessage?branchName=main)](https://tsharpsoftware.visualstudio.com/NetMessage/_build/latest?definitionId=1&branchName=main)
 
 **Typesafe and lightweight RPC for .NET**
 
@@ -8,10 +7,12 @@
 provide typesafe communication for any kind of .NET application. All message types are defined by plain C# classes. No
 configuration files, no external tools and no additional dependencies.
 
+
 ## Quickstart
 
 ### 1. Download
 Get *NetMessage* from [NuGet](https://www.nuget.org/packages/NetMessage/ "NetMessage on NuGet.org").
+
 
 ### 2. Define Data Types
 Create the message, request and response types, for example:
@@ -29,7 +30,7 @@ public class WeatherResponse
 } 
 ```
 
-*Instances of these classes are (de)serialized by the selected `IPayloadSerializer`. By default, the `XmlSerializer` from
+*Instances of these classes are (de)serialized by the selected `IDataSerializer`. By default, the `XmlSerializer` from
 .NET is used.*
 
 ### 3. Initialize and start server
@@ -109,10 +110,10 @@ Three basic message kinds can be distinguished:
 The client or server application can register on the `NetMessageClient` or `NetMessageServer` class to be notified when
 a message or request *with a specific type* is received:
 
-* `void AddMessageHandler<TTPld>(Action<NetMessageClient, TTPld> messageHandler)`
-  * Where `TTPld` is the expected message type without constraints.
-* `void AddRequestHandler<TTPld, TTRsp>(Action<NetMessageClient, TypedRequest<TTPld, TTRsp>> requestHandler)`
-  * Where `TTPld` is the expected request type and must derive `IRequest<TTRsp>`. `TTRsp` is the expected response type without 
+* `void AddMessageHandler<TTData>(Action<NetMessageClient, TTData> messageHandler)`
+  * Where `TTData` is the expected message type without constraints.
+* `void AddRequestHandler<TTData, TTRsp>(Action<NetMessageClient, TypedRequest<TTData, TTRsp>> requestHandler)`
+  * Where `TTData` is the expected request type and must derive `IRequest<TTRsp>`. `TTRsp` is the expected response type without 
     constraints. The `IRequest` interface is otherwise empty.
 
 Once connected, both the client and the server application can initiate sending of messages or requests on the
@@ -125,8 +126,8 @@ Once connected, both the client and the server application can initiate sending 
     timeout, a TimeoutException is thrown. The timeout value can be configured on the client or the server object.
   * Note that like for messages, the receiver must have added a handler for the appropriate type to receive the request.
 
-A response is sent by calling the following method diretly on the received `TypedRequest<TTPld, TTRsp>` object, which wraps
-the original user request object of type `TTPld`:
+A response is sent by calling the following method diretly on the received `TypedRequest<TTData, TTRsp>` object, which wraps
+the original user request object of type `TTData`:
 
 * `Task<bool> SendResponseAsync(TTRsp response)`
   * The type of the response is constrained by the received request. The sender of the request is notified transparently,
@@ -135,17 +136,19 @@ the original user request object of type `TTPld`:
 
 ## Extension
 If you want to use a custom protocol, but still want to take advantage of the event based notifications for messages, requests
-and responses, you will only need the *NetMessage.Base* NuGet package. The basic working principle described above is still valid,
-but the higher layer for transparent (de)serialization of C# objects will not be available.
+and responses, you will only need the [NetMessage.Base](https://www.nuget.org/packages/NetMessage.Base "NetMessage.Base on NuGet.org")
+NuGet package. The basic working principle described above is still valid, but the higher layer for transparent (de)serialization
+of C# objects will not be available.
 
 Using a custom protocol is as simple as implementing the `IProtocol` interface ([IProtocol.cs](NetMessage.Base/IProtocol.cs))
 and adding the corresponding concrete classes for the server, client and session. See the *SimpleString* Example in the
 [Examples](https://github.com/till-f/NetMessage/tree/main/Examples) folder for details.
 
 If you just want to change the way how C# objects are (de)serialized, e.g. if you want to use Json instead of XML, all you have to do
-is implementing the `IPayloadSerializer` interface ([IPayloadSerializer.cs](NetMessage/IPayloadSerializer.cs)) and pass the
+is implementing the `IDataSerializer` interface ([IDataSerializer.cs](NetMessage/IDataSerializer.cs)) and pass the
 corresponding instance to the `NetMessageServer` and `NetMessageClient` constructor respectively. Take a look at the existing
-implementation for XML in [XmlPayloadSerializer.cs](NetMessage/XmlPayloadSerializer.cs) if you need an example.
+implementation for XML in [XmlDataSerializer.cs](NetMessage/XmlDataSerializer.cs) if you need an example.
+
 
 ## Tests
 There is small but strong collection of integration tests, see [here](https://github.com/till-f/NetMessage/tree/main/Tests).

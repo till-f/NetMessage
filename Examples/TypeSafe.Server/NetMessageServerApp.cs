@@ -10,8 +10,6 @@ namespace NetMessage.Examples.TypeSafe.Server
 
     private static NetMessageSession? _openSession;
 
-    public static StreamWriter _writer = File.AppendText("messages.log");
-
     static void Main()
     {
       CultureInfo.CurrentUICulture = CultureInfo.InvariantCulture;
@@ -33,7 +31,7 @@ namespace NetMessage.Examples.TypeSafe.Server
               break;
             }
             // note that will not be displayed correctly in the console if your system locale is something like English
-            _openSession.SendMessageAsync("Hello in Chinese: 你好");
+            _openSession.SendMessageAsync("Hello from Server!");
             break;
           case 'r':
             if (_openSession == null)
@@ -42,6 +40,14 @@ namespace NetMessage.Examples.TypeSafe.Server
               break;
             }
             RequestAndResponseExample();
+            break;
+          case 'd':
+            if (_openSession == null)
+            {
+              Console.WriteLine("Client not connected.");
+              break;
+            }
+            _openSession.Disconnect();
             break;
         }
       }
@@ -86,8 +92,6 @@ namespace NetMessage.Examples.TypeSafe.Server
     private static void StringMessageHandler(NetMessageSession sesion, string stringMessage)
     {
       Console.WriteLine($"RECEIVED STRING MESSAGE: {stringMessage}");
-      _writer.WriteLine($"RECEIVED STRING MESSAGE: {stringMessage}");
-      _writer.Flush();
     }
 
     private static void WeatherRequestHandler(NetMessageSession session, TypedRequest<WeatherRequest, WeatherResponse> weatherRequest)

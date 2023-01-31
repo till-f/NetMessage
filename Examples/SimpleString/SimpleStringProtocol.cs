@@ -12,13 +12,13 @@ namespace NetMessage.Examples.SimpleString
   /// The protocol supports the request/response mechanism.
   /// 
   /// The end of a message is determined by a termination sequence ( <see cref="Terminator"/>)
-  /// which must not be contained in the payload (no escaping is applied by the protocol).
+  /// which must not be contained in the transferred data (no escaping is applied by the protocol).
   /// </summary>
   //
   // Raw message string format:
-  // Message   :Payload
-  // Request   >ResonseId:Payload
-  // Response  <ResonseId:Payload
+  // Message   :DataString
+  // Request   >RequestId:DataString
+  // Response  <ResonseId:DataString
   public class SimpleStringProtocol : IProtocol<string>
   {
     private const char _separatorToken = ':';
@@ -37,9 +37,9 @@ namespace NetMessage.Examples.SimpleString
     /// </summary>
     public string Terminator { get; set; } = "\u0004";
 
-    public IList<IMessage<string>> FromRaw(byte[] rawData)
+    public IList<IPacket<string>> FromRaw(byte[] rawData)
     {
-      var messages = new List<IMessage<string>>();
+      var messages = new List<IPacket<string>>();
 
       var text = Encoding.GetString(rawData);
 
@@ -65,7 +65,7 @@ namespace NetMessage.Examples.SimpleString
       return messages;
     }
 
-    private IMessage<string> ParseMessage(string rawString)
+    private IPacket<string> ParseMessage(string rawString)
     {
       EMessageKind messageKind;
       switch (rawString[0])
@@ -93,35 +93,35 @@ namespace NetMessage.Examples.SimpleString
         idField = int.Parse(rawString.Substring(1, sepIdx - 1));
       }
 
-      var payload = rawString.Substring(sepIdx + 1);
+      var dataString = rawString.Substring(sepIdx + 1);
 
       switch (messageKind)
       {
         case EMessageKind.Request:
-          return new SimpleStringRequest(payload, idField);
+          return new SimpleStringRequest(dataString, idField);
         case EMessageKind.Response:
-          return new Response<string>(payload, idField);
+          return new Response<string>(dataString, idField);
         default:
-          return new Message<string>(payload);
+          return new Message<string>(dataString);
       }
     }
 
-    public byte[] ToRawMessage(string payload)
+    public byte[] ToRawMessage(string dataString)
     {
-      return ToRaw(EMessageKind.Message, payload, -1);
+      return ToRaw(EMessageKind.Message, dataString, -1);
     }
 
-    public byte[] ToRawRequest(string payload, int requestId)
+    public byte[] ToRawRequest(string dataString, int requestId)
     {
-      return ToRaw(EMessageKind.Request, payload, requestId);
+      return ToRaw(EMessageKind.Request, dataString, requestId);
     }
 
-    public byte[] ToRawResponse(string payload, int responseId)
+    public byte[] ToRawResponse(string dataString, int responseId)
     {
-      return ToRaw(EMessageKind.Response, payload, responseId);
+      return ToRaw(EMessageKind.Response, dataString, responseId);
     }
 
-    private byte[] ToRaw(EMessageKind messageKind, string payload, int id)
+    private byte[] ToRaw(EMessageKind messageKind, string dataString, int id)
     {
       string messageKindToken;
       switch (messageKind)
@@ -145,7 +145,7 @@ namespace NetMessage.Examples.SimpleString
       sb.Append(messageKindToken);
       sb.Append(responseIdString);
       sb.Append(_separatorToken);
-      sb.Append(payload);
+      sb.Append(dataString);
       sb.Append(Terminator);
 
       return Encoding.GetBytes(sb.ToString());

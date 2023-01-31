@@ -2,18 +2,18 @@
 {
   public enum EMessageKind { Message, Request, Response }
 
-  public class Response<TPld> : IMessage<TPld>
+  public class Response<TData> : IPacket<TData>
   {
     /// <summary>
     /// Container for a response (in contrast to message and request)
     /// </summary>
-    public Response(TPld payload, int responseId)
+    public Response(TData data, int responseId)
     {
-      Payload = payload;
+      Data = data;
       ResponseId = responseId;
     }
 
-    public TPld Payload { get; }
+    public TData Data { get; }
 
     public int ResponseId { get; }
   }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace NetMessage.Base
 {
-  public interface IProtocol<TPld>
+  public interface IProtocol<TData>
   {
     /// <summary>
     /// Processes the received raw data and returns all received messages,
@@ -12,35 +12,35 @@ namespace NetMessage.Base
     /// 
     /// If the protocol does not support the request/response mechanism,
     /// the client and server implementation must not expose this method:
-    /// <see cref="CommunicatorBase{TRequest, TProtocol, TPld}.SendRequestInternalAsync(TPld)"/>
+    /// <see cref="CommunicatorBase{TRequest, TProtocol, TData}.SendRequestInternalAsync(TData)"/>
     /// 
     /// The implementation must use an internal buffer to store the data
-    /// that cannot be processed yet (e.g. an incompletely received message)
+    /// that cannot be processed yet (e.g. an incompletely received packets)
     /// so that is ready to be consued when the next chunk of data arrives.
     /// </summary>
-    IList<IMessage<TPld>> FromRaw(byte[] rawData);
+    IList<IPacket<TData>> FromRaw(byte[] rawData);
 
     /// <summary>
-    /// Converts the message object to the raw message format.
+    /// Converts a message object to the raw message format.
     /// </summary>
-    byte[] ToRawMessage(TPld payload);
+    byte[] ToRawMessage(TData data);
 
     /// <summary>
-    /// Converts the request object to the raw request format.
+    /// Converts a request object to the raw request format.
     /// 
     /// If the protocol does not support the request/response mechanism,
     /// the client and server implementation must not expose this method:
-    /// <see cref="CommunicatorBase{TRequest, TProtocol, TPld}.SendRequestInternalAsync(TPld)"/>
+    /// <see cref="CommunicatorBase{TRequest, TProtocol, TData}.SendRequestInternalAsync(TData)"/>
     /// </summary>
-    byte[] ToRawRequest(TPld payload, int requestId);
+    byte[] ToRawRequest(TData data, int requestId);
 
     /// <summary>
-    /// Converts the response object to the raw response format.
+    /// Converts a response object to the raw response format.
     /// 
     /// If the protocol does not support the request/response mechanism,
     /// the client and server implementation must not expose this method:
-    /// <see cref="CommunicatorBase{TRequest, TProtocol, TPld}.SendRequestInternalAsync(TPld)"/>
+    /// <see cref="CommunicatorBase{TRequest, TProtocol, TData}.SendRequestInternalAsync(TData)"/>
     /// </summary>
-    byte[] ToRawResponse(TPld payload, int responseId);
+    byte[] ToRawResponse(TData data, int responseId);
   }
 }
