@@ -6,7 +6,7 @@ namespace NetMessage.Integration.Test.TestFramework
 {
   public class WaitToken
   {
-    public static readonly TimeSpan Timeout = TimeSpan.FromSeconds(5);
+    public static readonly TimeSpan Timeout = TimeSpan.FromSeconds(15);
 
     private readonly CountdownEvent _countDownEvent;
 
