@@ -75,10 +75,21 @@ namespace NetMessage.Base
     public bool IsConnected => RemoteSocket != null && RemoteSocket.Connected;
 
     /// <summary>
-    /// Cancels async operations, closes the socket and disposes it.
-    /// If shutdown is 'true', attempts to shut down the remote connection if connected.
+    /// Graceful closure of the connection.
     /// </summary>
-    public void Close(bool shutdown)
+    public void Disconnect()
+    {
+      if (IsConnected)
+      {
+        RemoteSocket?.Shutdown(SocketShutdown.Send);
+      }
+    }
+
+    /// <summary>
+    /// Cancels async operations, closes the socket and disposes it.
+    /// If waitForReceiveTask is 'true', it will wait for the receive task to close (up to 3 seconds).
+    /// </summary>
+    public void Close(bool waitForReceiveTask)
     {
       if (_isClosing)
       {
@@ -87,12 +98,15 @@ namespace NetMessage.Base
       _isClosing = true;
 
       _cancellationTokenSource.Cancel();
-      _receiveTaskStoppedEvent.WaitOne(TimeSpan.FromSeconds(1));
-      if (shutdown && IsConnected)
+      if (waitForReceiveTask)
       {
-        RemoteSocket?.Shutdown(SocketShutdown.Both);
-        RemoteSocket?.Disconnect(false);
+        var result = _receiveTaskStoppedEvent.WaitOne(TimeSpan.FromSeconds(3));
+        if (!result)
+        {
+          NotifyError("Timeout while waiting for shutdown of receive task", null);
+        }
       }
+
       RemoteSocket?.Close();
       RemoteSocket?.Dispose();
       NotifyClosed();
@@ -207,7 +221,7 @@ namespace NetMessage.Base
           {
             try
             {
-              ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[RemoteSocket!.ReceiveBufferSize]);
+              var buffer = new ArraySegment<byte>(new byte[RemoteSocket!.ReceiveBufferSize]);
               var singleReceiveTask = RemoteSocket.ReceiveAsync(buffer, SocketFlags.None);
               singleReceiveTask.Wait(CancellationToken);
 
@@ -217,10 +231,15 @@ namespace NetMessage.Base
                 throw new InvalidOperationException("Single receive terminated abnormally");
               }
 
-              int byteCount = singleReceiveTask.Result;
-              if (singleReceiveTask.Result == 0)
+              var byteCount = singleReceiveTask.Result;
+
+              if (byteCount == 0)
               {
-                continue;
+                // successful completion of a zero-byte receive operation indicates graceful closure of remote socket
+                RemoteSocket.Shutdown(SocketShutdown.Both);
+                RemoteSocket.Disconnect(false);
+                Close(false);
+                return;
               }
 
               var rawData = new byte[byteCount];
@@ -252,7 +271,7 @@ namespace NetMessage.Base
             }
             catch (Exception ex)
             {
-              if (HandleException(ex)) return;
+              if (HandleReceiveException(ex)) return;
             }
           }
         }
@@ -273,47 +292,34 @@ namespace NetMessage.Base
     }
 
     /// <summary>
-    /// Handler for exceptions in the async background tasks.
-    /// Returns true to indicate that task should be aborted.
+    /// Handler for exceptions in the async receive tasks.
+    /// Returns true to indicate that the receive should be aborted.
     /// </summary>
-    protected bool HandleException(Exception ex)
+    protected bool HandleReceiveException(Exception ex)
     {
-      // CancellationToken was triggered. This is NOT an error (do not notify about it)
+      // CancellationToken was triggered. This is not an error (do not notify about it)
       if (ex is OperationCanceledException)
       {
         return true;
       }
 
+      // Socket exception occurred. In this case, we consider the connection unhealthy and we close it.
+      // FUTURE: depending on kind of error, try automatic reconnect / restoring the connection
       if (ex.InnerException is SocketException se)
       {
-        if (se.SocketErrorCode != SocketError.ConnectionReset)
-        {
-          NotifyError($"Socket Error {se.SocketErrorCode}", se);
-        }
-
-        // TODO: depending on kind of error, Close or try to Reconnect
+        NotifyError($"Unexpected socket error in receive task: {se.SocketErrorCode}", se);
         Close(false);
         return true;
       }
 
-      NotifyError($"Unexpected {ex.GetType().Name}", ex);
-
-      // It is possible that the connection was closed after the wait completed, but before next wait started.
-      // In that case, a NullReferenceException (or similar) might be thrown because the RemoteSocket is not
-      // functional. This case is detected by checking IsCancellationRequested again. If it was requested,
-      // ignore the error.
-      if (CancellationToken.IsCancellationRequested)
-      {
-        Console.WriteLine($"DEBUG: Exception above was thrown after cancellation was requested!");
-        return true;
-      }
-
+      // Another exception occurred. In this case, the connection should still be usable.
+      NotifyError($"Unexpected {ex.GetType().Name} in receive task: {ex.Message}", ex);
       return false;
     }
 
     public void Dispose()
     {
-      Close(false);
+      Close(true);
     }
   }
 }

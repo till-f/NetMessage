@@ -66,15 +66,16 @@ namespace NetMessage.Base
         }
         catch (Exception ex)
         {
-          HandleException(ex);
+          // CancellationToken was triggered. This is not an error (do not notify about it)
+          if (ex is OperationCanceledException)
+          {
+            return false;
+          }
+
+          NotifyError($"{ex.GetType().Name} when connecting: {ex.Message}", ex);
           return false;
         }
       });
-    }
-
-    public void Disconnect()
-    {
-      Close(true);
     }
 
     protected override void HandleMessage(Message<TData> message)

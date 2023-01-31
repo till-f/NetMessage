@@ -37,11 +37,6 @@ namespace NetMessage
       return _dataSerializer.Deserialize<TTRsp>(result.Data.DataString);
     }
 
-    public void Disconnect()
-    {
-      Close(true);
-    }
-
     internal void Init(IDataSerializer dataSerializer)
     {
       _dataSerializer = dataSerializer;

@@ -18,7 +18,7 @@ namespace NetMessage.Base
     private readonly Dictionary<Guid, TSession> _sessions = new Dictionary<Guid, TSession>();
     private readonly IPEndPoint _endPoint;
 
-    private Socket? _socket;
+    private Socket? _listenSocket;
     private CancellationTokenSource? _cancellationTokenSource;
 
     public event Action<TSession>? SessionOpened;
@@ -58,44 +58,44 @@ namespace NetMessage.Base
 
     public void Start()
     {
-      if (_socket != null)
+      if (_listenSocket != null)
       {
         return;
       }
 
       _cancellationTokenSource = new CancellationTokenSource();
-      _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-      _socket.Bind(_endPoint);
+      _listenSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+      _listenSocket.Bind(_endPoint);
       try
       {
-        _socket.Listen(10);
+        _listenSocket.Listen(10);
       }
       catch (Exception ex)
       {
         OnError?.Invoke((TServer)this, null, "Could not start listening on socket", ex);
-        _socket.Dispose();
-        _socket = null;
+        _listenSocket.Dispose();
+        _listenSocket = null;
       }
       AcceptConnectionsAsync();
     }
 
     public void Stop()
     {
-      if (_socket == null)
+      if (_listenSocket == null)
       {
         return;
       }
 
+      _cancellationTokenSource!.Cancel();
+      _listenSocket.Close();
+      _listenSocket.Dispose();
+      _listenSocket = null;
+
       lock (_sessions)
       {
-        _cancellationTokenSource!.Cancel();
-        _socket?.Close();
-        _socket?.Dispose();
-        _socket = null;
-
         foreach (var kvp in _sessions.ToArray())
         {
-          kvp.Value.Close(true);
+          kvp.Value.Disconnect();
           _sessions.Remove(kvp.Key);
         }
       }
@@ -154,12 +154,12 @@ namespace NetMessage.Base
           TSession? session = null;
           try
           {
-            if (_socket == null)
+            if (_listenSocket == null)
             {
               return;
             }
 
-            var acceptTask = _socket.AcceptAsync();
+            var acceptTask = _listenSocket.AcceptAsync();
             acceptTask.Wait(_cancellationTokenSource.Token);
 
             if (!acceptTask.IsCompleted || acceptTask.IsFaulted)
@@ -197,7 +197,7 @@ namespace NetMessage.Base
           {
             if (session != null)
             {
-              session.Close(false);
+              session.Close(true);
             }
 
             // CancellationToken was triggered. This is NOT an error (do not notify about it)
