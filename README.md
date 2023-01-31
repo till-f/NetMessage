@@ -1,7 +1,7 @@
 # NetMessage<br>
 [![NuGet version (NetMessage.Base)](https://img.shields.io/nuget/v/NetMessage.Base.svg?style=flat)](https://www.nuget.org/packages/NetMessage.Base/)
 [![Build Status](https://tsharpsoftware.visualstudio.com/NetMessage/_apis/build/status/till-f.NetMessage?branchName=main)](https://tsharpsoftware.visualstudio.com/NetMessage/_build/latest?definitionId=1&branchName=main)
-![Coverage](https://img.shields.io/azure-devops/coverage/tsharpsoftware/netmessage/1)
+![Coverage](https://img.shields.io/azure-devops/coverage/tsharpsoftware/netmessage/1/main)
 
 **Typesafe and lightweight RPC for .NET**
 
