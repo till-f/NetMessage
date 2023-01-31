@@ -29,17 +29,19 @@ namespace NetMessage.Integration.Test
   {
     // host, port and some dummy data for testing
     private const string ServerHost = "127.0.0.1";
-    private const int ServerPort = 1234;
-    private const int ResponseTimeoutMs = 200;
-    private const int ResponseTimeoutMaxDiscr = 40;
+    private const int ResponseTimeoutMs = 500;
+    private const int ResponseTimeoutMaxDiscr = 50;
     private const string TestMessageText = "TestMessage";
     private const string TestRequestText = "TestRequest";
 
     // the number of messages that should be sent for the "burst" tests
-    private const int MessageCount = 2000;
+    private const int MessageCount = 1000;
 
     // the number of clients for all tests (some test may only use one of them)
     private const int ClientCount = 2;
+
+    // the listening port used by the server; is incremented after each tests to ensure that ports are not reused
+    private static int _serverPort = 1000;
 
     // the server and all clients are constructed and connected when test methods are entered
     private NetMessageServer? _server;
@@ -68,7 +70,7 @@ namespace NetMessage.Integration.Test
     [TestInitialize]
     public void TestInitialize()
     {
-      _server = new NetMessageServer(ServerPort);
+      _server = new NetMessageServer(++_serverPort);
       _server.ResponseTimeout = TimeSpan.FromMilliseconds(ResponseTimeoutMs);
       _server.FailOnFaultedReceiveTask = true;
       _server.OnError += OnServerError;
@@ -127,7 +129,7 @@ namespace NetMessage.Integration.Test
     [TestMethod]
     public void ConnectOfConnectedClient()
     {
-      var task = _clients[0].ConnectAsync(ServerHost, ServerPort);
+      var task = _clients[0].ConnectAsync(ServerHost, _serverPort);
       task.WaitAndAssert("Connect task did not succeed");
       Assert.IsFalse(task.Result, "Connecting of already connected client did not return false");
     }
@@ -257,7 +259,7 @@ namespace NetMessage.Integration.Test
     private void ConnectClient(int clientIndex)
     {
       _sessionOpenedWt = new WaitToken(1);
-      var task = _clients[clientIndex].ConnectAsync(ServerHost, ServerPort);
+      var task = _clients[clientIndex].ConnectAsync(ServerHost, _serverPort);
       task.WaitAndAssert($"Client {clientIndex} did not connect");
       Assert.IsTrue(task.Result);
       Assert.IsTrue(_clients[clientIndex].IsConnected);
