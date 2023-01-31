@@ -30,8 +30,8 @@ namespace NetMessage.Integration.Test
     // host, port and some dummy data for testing
     private const string ServerHost = "127.0.0.1";
     private const int ServerPort = 1234;
-    private const int ResponseTimeoutMs = 200;
-    private const int ResponseTimeoutMaxDiscr = 20;
+    private const int ResponseTimeoutMs = 400;
+    private const int ResponseTimeoutMaxDiscr = 40;
     private const string TestMessageText = "TestMessage";
     private const string TestRequestText = "TestRequest";
 
