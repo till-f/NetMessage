@@ -378,8 +378,6 @@ namespace NetMessage.Integration.Test
 
       var communicatorIndex = GetCommunicatorIndex(communicator);
 
-      TestContext!.WriteLine($"Received Request on {communicator.GetType().Name} {communicatorIndex}: {tr.Request.RequestCount}");
-
       var expectedCount = _receivedRequestsCount[communicatorIndex]++;
       Assert.AreEqual(expectedCount, tr.Request.RequestCount, "Unexpected request count");
       _receivedRequestWaitToken[communicatorIndex].Signal();
@@ -390,8 +388,6 @@ namespace NetMessage.Integration.Test
       Assert.AreEqual(message.MessageText, TestMessageText);
 
       var communicatorIndex = GetCommunicatorIndex(communicator);
-
-      TestContext!.WriteLine($"Received Message on {communicator.GetType().Name} {communicatorIndex}: {message.MessageCount}");
 
       var expectedCount = _receivedMessagesCount[communicatorIndex]++;
       Assert.AreEqual(expectedCount, message.MessageCount, "Unexpected message count");
