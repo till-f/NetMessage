@@ -91,5 +91,5 @@ jobs:
     displayName: 'Publish Code Coverage'
     inputs:
       codeCoverageTool: 'Cobertura'
-      summaryFileLocation: '$(Agent.TempDirectory)\TestResults\**\*.xml'
+      summaryFileLocation: '$(Agent.TempDirectory)\TestResults\*\In\*\*.cobertura.xml'
         
