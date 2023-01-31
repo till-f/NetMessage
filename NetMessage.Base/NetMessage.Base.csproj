@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="..\Icon\NetMessageIcon.png" Link="NetMessageIcon.png" Pack="true" PackagePath="\" />
     <None Include="README.NuGet.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
