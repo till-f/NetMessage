@@ -137,8 +137,8 @@ the original user request object of type `TTData`:
 
 
 ## Extension
-If you want to use a custom protocol, but still want to take advantage of the event based notifications for messages, requests
-and responses, you will only need the *NetMessage.Base* [NuGet package](https://www.nuget.org/packages/NetMessage.Base "NetMessage.Base on NuGet.org").
+If you want to implement a custom protocol, but still taking advantage of the event based notifications for messages, requests
+and responses provided by *NetMessage*, you might want to use the *NetMessage.Base* [NuGet package](https://www.nuget.org/packages/NetMessage.Base "NetMessage.Base on NuGet.org").
 The basic working principle described above is still valid, but the higher layer for transparent (de)serialization
 of C# objects will not be available.
 
