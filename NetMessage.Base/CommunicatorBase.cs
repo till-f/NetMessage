@@ -12,7 +12,7 @@ namespace NetMessage.Base
     where TProtocol : class, IProtocol<TData>
   {
     private readonly ConcurrentDictionary<int, ResponseEvent<TData>> _responseEvents = new ConcurrentDictionary<int, ResponseEvent<TData>>();
-    private readonly ManualResetEvent _receiveTaskStoppedEvent = new ManualResetEvent(true);
+    private readonly ManualResetEvent _disconnectionFinishedEvent = new ManualResetEvent(true);
 
     private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
     private bool _isClosing;
@@ -75,21 +75,32 @@ namespace NetMessage.Base
     public bool IsConnected => RemoteSocket != null && RemoteSocket.Connected;
 
     /// <summary>
-    /// Graceful closure of the connection.
+    /// Gracefully closes the connection.
+    /// This call is blocking and the default timeout is <see cref="Defaults.DisconnectTimeout"/>.
+    /// It is ensured that <see cref="Close"/> was called when this method returns.
     /// </summary>
-    public void Disconnect()
+    public void Disconnect(TimeSpan? timeout = null)
     {
       if (IsConnected)
       {
+        _disconnectionFinishedEvent.Reset();
         RemoteSocket?.Shutdown(SocketShutdown.Send);
+        var result = _disconnectionFinishedEvent.WaitOne(timeout ?? Defaults.DisconnectTimeout);
+        if (!result)
+        {
+          NotifyError("Timeout while waiting for the acknowledgement of disconnect", null);
+          Close();
+        }
       }
     }
 
     /// <summary>
     /// Cancels async operations, closes the socket and disposes it.
-    /// If waitForReceiveTask is 'true', it will wait for the receive task to close (up to 3 seconds).
+    /// It does not wait for async operations to signal completion.
+    /// It does not care about the other endpoint.
+    /// Use <see cref="Disconnect"/> to gracefully close the connection.
     /// </summary>
-    public void Close(bool waitForReceiveTask)
+    public void Close()
     {
       if (_isClosing)
       {
@@ -98,17 +109,10 @@ namespace NetMessage.Base
       _isClosing = true;
 
       _cancellationTokenSource.Cancel();
-      if (waitForReceiveTask)
-      {
-        var result = _receiveTaskStoppedEvent.WaitOne(TimeSpan.FromSeconds(3));
-        if (!result)
-        {
-          NotifyError("Timeout while waiting for shutdown of receive task", null);
-        }
-      }
-
       RemoteSocket?.Close();
       RemoteSocket?.Dispose();
+
+      _disconnectionFinishedEvent.Set();
       NotifyClosed();
     }
 
@@ -211,73 +215,64 @@ namespace NetMessage.Base
     /// </summary>
     protected void StartReceiveAsync()
     {
-      _receiveTaskStoppedEvent.Reset();
-
       var receiveTask = Task.Run(() =>
       {
-        try
+        while (!CancellationToken.IsCancellationRequested)
         {
-          while (!CancellationToken.IsCancellationRequested)
+          try
           {
-            try
+            var buffer = new ArraySegment<byte>(new byte[RemoteSocket!.ReceiveBufferSize]);
+            var singleReceiveTask = RemoteSocket.ReceiveAsync(buffer, SocketFlags.None);
+            singleReceiveTask.Wait(CancellationToken);
+
+            if (!singleReceiveTask.IsCompleted || singleReceiveTask.IsFaulted)
             {
-              var buffer = new ArraySegment<byte>(new byte[RemoteSocket!.ReceiveBufferSize]);
-              var singleReceiveTask = RemoteSocket.ReceiveAsync(buffer, SocketFlags.None);
-              singleReceiveTask.Wait(CancellationToken);
-
-              if (!singleReceiveTask.IsCompleted || singleReceiveTask.IsFaulted)
-              {
-                // should never occur
-                throw new InvalidOperationException("Single receive terminated abnormally");
-              }
-
-              var byteCount = singleReceiveTask.Result;
-
-              if (byteCount == 0)
-              {
-                // successful completion of a zero-byte receive operation indicates graceful closure of remote socket
-                RemoteSocket.Shutdown(SocketShutdown.Both);
-                RemoteSocket.Disconnect(false);
-                Close(false);
-                return;
-              }
-
-              var rawData = new byte[byteCount];
-              Array.Copy(buffer.Array!, rawData, byteCount);
-              var receivedMessages = ProtocolBuffer!.FromRaw(rawData);
-              foreach (var messageInfo in receivedMessages)
-              {
-                if (messageInfo is Message<TData> message)
-                {
-                  HandleMessage(message);
-                }
-                else if (messageInfo is TRequest request)
-                {
-                  request.SetContext(
-                    (msg, id) => ProtocolBuffer!.ToRawResponse(msg, id),
-                    SendRawDataAsync,
-                    NotifyError
-                  );
-                  HandleRequest(request);
-                }
-                else if (messageInfo is Response<TData> response)
-                {
-                  var responseEvent = _responseEvents[response.ResponseId];
-                  _responseEvents.TryRemove(response.ResponseId, out _);
-                  responseEvent.Response = response;
-                  responseEvent.Set();
-                }
-              }
+              // should never occur
+              throw new InvalidOperationException("Single receive terminated abnormally");
             }
-            catch (Exception ex)
+
+            var byteCount = singleReceiveTask.Result;
+
+            if (byteCount == 0)
             {
-              if (HandleReceiveException(ex)) return;
+              // successful completion of a zero-byte receive operation indicates graceful closure of remote socket
+              RemoteSocket.Shutdown(SocketShutdown.Both);
+              RemoteSocket.Disconnect(false);
+              Close();
+              return;
+            }
+
+            var rawData = new byte[byteCount];
+            Array.Copy(buffer.Array!, rawData, byteCount);
+            var receivedMessages = ProtocolBuffer!.FromRaw(rawData);
+            foreach (var messageInfo in receivedMessages)
+            {
+              if (messageInfo is Message<TData> message)
+              {
+                HandleMessage(message);
+              }
+              else if (messageInfo is TRequest request)
+              {
+                request.SetContext(
+                  (msg, id) => ProtocolBuffer!.ToRawResponse(msg, id),
+                  SendRawDataAsync,
+                  NotifyError
+                );
+                HandleRequest(request);
+              }
+              else if (messageInfo is Response<TData> response)
+              {
+                var responseEvent = _responseEvents[response.ResponseId];
+                _responseEvents.TryRemove(response.ResponseId, out _);
+                responseEvent.Response = response;
+                responseEvent.Set();
+              }
             }
           }
-        }
-        finally
-        {
-          _receiveTaskStoppedEvent.Set();
+          catch (Exception ex)
+          {
+            if (HandleReceiveException(ex)) return;
+          }
         }
       }, CancellationToken);
 
@@ -311,7 +306,7 @@ namespace NetMessage.Base
       if (ex.InnerException is SocketException se)
       {
         NotifyError($"Unexpected socket error in receive task: {se.SocketErrorCode}", se);
-        Close(false);
+        Close();
         return true;
       }
 
@@ -322,7 +317,7 @@ namespace NetMessage.Base
 
     public void Dispose()
     {
-      Close(true);
+      Close();
     }
   }
 }

@@ -197,7 +197,7 @@ namespace NetMessage.Base
           {
             if (session != null)
             {
-              session.Close(true);
+              session.Close();
             }
 
             // CancellationToken was triggered. This is NOT an error (do not notify about it)
