@@ -95,7 +95,7 @@ namespace NetMessage.Base
 
         foreach (var kvp in _sessions.ToArray())
         {
-          kvp.Value.Close();
+          kvp.Value.Close(true);
           _sessions.Remove(kvp.Key);
         }
       }
@@ -197,7 +197,7 @@ namespace NetMessage.Base
           {
             if (session != null)
             {
-              session.Close();
+              session.Close(false);
             }
 
             // CancellationToken was triggered. This is NOT an error (do not notify about it)

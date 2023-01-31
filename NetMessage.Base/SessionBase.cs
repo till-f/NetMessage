@@ -23,7 +23,7 @@ namespace NetMessage.Base
     {
       Server = server;
       _remoteSocket = remoteSocket;
-      _remoteSocket.LingerState = new LingerOption(false, 0);  // don't try to send queued data when disconnect is called (but discard)
+      _remoteSocket.LingerState = new LingerOption(true, 0);  // discard queued data when disconnect and reset the connection
       _protocolBuffer = protocolBuffer;
       RemoteEndPoint = (IPEndPoint)_remoteSocket.RemoteEndPoint;
       StartReceiveAsync();

@@ -43,10 +43,10 @@ namespace NetMessage.Base
               return false;
             }
 
-            ResetCancellationToken();
+            ResetConnectionState();
 
             _remoteSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-            _remoteSocket.LingerState = new LingerOption(false, 0);  // don't try to send queued data when disconnect is called (but discard)
+            _remoteSocket.LingerState = new LingerOption(true, 0);  // discard queued data when disconnect and reset the connection
             _protocolBuffer = CreateProtocolBuffer();
             var connectTask = _remoteSocket.ConnectAsync(remoteHost, remotePort);
             connectTask.Wait();
@@ -74,12 +74,7 @@ namespace NetMessage.Base
 
     public void Disconnect()
     {
-      if (!IsConnected)
-      {
-        return;
-      }
-
-      Close();
+      Close(true);
     }
 
     protected override void HandleMessage(Message<TData> message)

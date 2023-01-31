@@ -109,19 +109,19 @@ namespace NetMessage.Integration.Test
       Assert.IsTrue(_clients[0].IsConnected);
       Assert.IsTrue(_clients[1].IsConnected);
 
-      //_sessionClosedWt = new WaitToken(1);
+      _sessionClosedWt = new WaitToken(1);
       _clients[0].Disconnect();
       Assert.IsFalse(_clients[0].IsConnected);
       Assert.IsTrue(_clients[1].IsConnected);
-      //_sessionClosedWt.WaitAndAssert("Session was not closed after disconnection of client 0");
-      //Assert.AreEqual(_sessions[0], _lastClosedSession);
+      _sessionClosedWt.WaitAndAssert("Session was not closed after disconnection of client 0");
+      Assert.AreEqual(_sessions[0], _lastClosedSession);
 
-      //_sessionClosedWt = new WaitToken(1);
+      _sessionClosedWt = new WaitToken(1);
       _clients[1].Disconnect();
       Assert.IsFalse(_clients[0].IsConnected);
       Assert.IsFalse(_clients[1].IsConnected);
-      //_sessionClosedWt.WaitAndAssert("Session was not closed after disconnection of client 1");
-      //Assert.AreEqual(_sessions[1], _lastClosedSession);
+      _sessionClosedWt.WaitAndAssert("Session was not closed after disconnection of client 1");
+      Assert.AreEqual(_sessions[1], _lastClosedSession);
     }
 
     [TestMethod]

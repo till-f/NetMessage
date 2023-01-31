@@ -12,9 +12,10 @@ namespace NetMessage.Base
     where TProtocol : class, IProtocol<TData>
   {
     private readonly ConcurrentDictionary<int, ResponseEvent<TData>> _responseEvents = new ConcurrentDictionary<int, ResponseEvent<TData>>();
+    private readonly ManualResetEvent _receiveTaskStoppedEvent = new ManualResetEvent(true);
 
-    private readonly ManualResetEvent _receiveTaskStoppedEvent = new ManualResetEvent(false);
     private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+    private bool _isClosing;
     private int _responseIdCounter;
 
     /// <summary>
@@ -64,7 +65,7 @@ namespace NetMessage.Base
 
     /// <summary>
     /// Retrieves the cancellation token. It is set when close is requested.
-    /// It can be reset by calling <see cref="ResetCancellationToken"/>.
+    /// It can be reset by calling <see cref="ResetConnectionState"/>.
     /// </summary>
     protected CancellationToken CancellationToken => _cancellationTokenSource.Token;
 
@@ -75,29 +76,42 @@ namespace NetMessage.Base
 
     /// <summary>
     /// Cancels async operations, closes the socket and disposes it.
+    /// If shutdown is 'true', attempts to shut down the remote connection if connected.
     /// </summary>
-    public void Close()
+    public void Close(bool shutdown)
     {
+      if (_isClosing)
+      {
+        return;
+      }
+      _isClosing = true;
+
       _cancellationTokenSource.Cancel();
       _receiveTaskStoppedEvent.WaitOne(TimeSpan.FromSeconds(1));
-      RemoteSocket?.Disconnect(false);
+      if (shutdown && IsConnected)
+      {
+        RemoteSocket?.Shutdown(SocketShutdown.Both);
+        RemoteSocket?.Disconnect(false);
+      }
       RemoteSocket?.Close();
       RemoteSocket?.Dispose();
       NotifyClosed();
     }
 
     /// <summary>
-    /// Resets the CancellationToken so that communication can be cancelled again.
-    /// Can only be called when communication is inactive (socket not connected).
+    /// Resets the state so that connection can be closed again.
+    /// This resets _isClosing and _cancellationTokenSource.
+    /// Must not be called when communication is active (socket already connected).
     /// </summary>
-    protected void ResetCancellationToken()
+    protected void ResetConnectionState()
     {
       if (IsConnected)
       {
-        NotifyError("Cannot reset CancellationToken because socket is connected", null);
+        NotifyError("Cannot reset connection because socket is connected", null);
         return;
       }
 
+      _isClosing = false;
       _cancellationTokenSource = new CancellationTokenSource();
     }
 
@@ -187,61 +201,66 @@ namespace NetMessage.Base
 
       var receiveTask = Task.Run(() =>
       {
-        while (!CancellationToken.IsCancellationRequested)
+        try
         {
-          try
+          while (!CancellationToken.IsCancellationRequested)
           {
-            ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[RemoteSocket!.ReceiveBufferSize]);
-            var singleReceiveTask = RemoteSocket.ReceiveAsync(buffer, SocketFlags.None);
-            singleReceiveTask.Wait(CancellationToken);
-
-            if (!singleReceiveTask.IsCompleted || singleReceiveTask.IsFaulted)
+            try
             {
-              // should never occur
-              throw new InvalidOperationException("Single receive terminated abnormally");
-            }
+              ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[RemoteSocket!.ReceiveBufferSize]);
+              var singleReceiveTask = RemoteSocket.ReceiveAsync(buffer, SocketFlags.None);
+              singleReceiveTask.Wait(CancellationToken);
 
-            int byteCount = singleReceiveTask.Result;
-            if (singleReceiveTask.Result == 0)
-            {
-              continue;
-            }
-
-            var rawData = new byte[byteCount];
-            Array.Copy(buffer.Array!, rawData, byteCount);
-            var receivedMessages = ProtocolBuffer!.FromRaw(rawData);
-            foreach (var messageInfo in receivedMessages)
-            {
-              if (messageInfo is Message<TData> message)
+              if (!singleReceiveTask.IsCompleted || singleReceiveTask.IsFaulted)
               {
-                HandleMessage(message);
+                // should never occur
+                throw new InvalidOperationException("Single receive terminated abnormally");
               }
-              else if (messageInfo is TRequest request)
+
+              int byteCount = singleReceiveTask.Result;
+              if (singleReceiveTask.Result == 0)
               {
-                request.SetContext(
-                  (msg, id) => ProtocolBuffer!.ToRawResponse(msg, id),
-                  SendRawDataAsync,
-                  NotifyError
+                continue;
+              }
+
+              var rawData = new byte[byteCount];
+              Array.Copy(buffer.Array!, rawData, byteCount);
+              var receivedMessages = ProtocolBuffer!.FromRaw(rawData);
+              foreach (var messageInfo in receivedMessages)
+              {
+                if (messageInfo is Message<TData> message)
+                {
+                  HandleMessage(message);
+                }
+                else if (messageInfo is TRequest request)
+                {
+                  request.SetContext(
+                    (msg, id) => ProtocolBuffer!.ToRawResponse(msg, id),
+                    SendRawDataAsync,
+                    NotifyError
                   );
-                HandleRequest(request);
-              }
-              else if (messageInfo is Response<TData> response)
-              {
-                var responseEvent = _responseEvents[response.ResponseId];
-                _responseEvents.TryRemove(response.ResponseId, out _);
-                responseEvent.Response = response;
-                responseEvent.Set();
+                  HandleRequest(request);
+                }
+                else if (messageInfo is Response<TData> response)
+                {
+                  var responseEvent = _responseEvents[response.ResponseId];
+                  _responseEvents.TryRemove(response.ResponseId, out _);
+                  responseEvent.Response = response;
+                  responseEvent.Set();
+                }
               }
             }
-          }
-          catch (Exception ex)
-          {
-            if (HandleException(ex)) return;
+            catch (Exception ex)
+            {
+              if (HandleException(ex)) return;
+            }
           }
         }
+        finally
+        {
+          _receiveTaskStoppedEvent.Set();
+        }
       }, CancellationToken);
-
-      _receiveTaskStoppedEvent.Set();
 
       // The receive task is very robust and almost impossible to fail. Any exception is propagated via the OnError event.
       // Only if an exception occurs inside an OnError handler, this exception would stop the receive task more or less silently.
@@ -273,7 +292,7 @@ namespace NetMessage.Base
         }
 
         // TODO: depending on kind of error, Close or try to Reconnect
-        Close();
+        Close(false);
         return true;
       }
 
@@ -294,7 +313,7 @@ namespace NetMessage.Base
 
     public void Dispose()
     {
-      Close();
+      Close(false);
     }
   }
 }
