@@ -85,7 +85,6 @@ jobs:
     inputs:
       targetPath: '$(Agent.TempDirectory)\TestResults'
       artifactName: 'TestResults'
-    condition: succeededOrFailed()
 
   - task: PublishCodeCoverageResults@1
     displayName: 'Publish Code Coverage'
