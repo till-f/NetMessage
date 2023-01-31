@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="128"
+   height="128"
+   overflow="hidden"
+   version="1.1"
+   id="svg33"
+   sodipodi:docname="NetMessageIcon.svg"
+   inkscape:version="1.1 (c68e22c387, 2021-05-23)"
+   inkscape:export-filename="C:\Data\git\_Others\NetMessage\Icon\NetMessageIocn.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview35"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="false"
+     showgrid="false"
+     inkscape:zoom="3.30625"
+     inkscape:cx="124.00756"
+     inkscape:cy="135.34972"
+     inkscape:window-width="2381"
+     inkscape:window-height="1417"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg33" />
+  <defs
+     id="defs9">
+    <clipPath
+       id="clip0">
+      <rect
+         x="0"
+         y="0"
+         width="1280"
+         height="720"
+         id="rect2" />
+    </clipPath>
+    <image
+       width="79"
+       height="75"
+       xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAE8AAABLCAMAAAAGeyqiAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAFEUExURQAAAP///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////3wIdNoAAABsdFJOUwABAgMEBQcICQoNDg8QERQVFhcaGxwdHiEiIyUnKCkrLC0xMjM1Njk6Ozw9Pj9AQ0RFR0lMUlNUV1haXV9hY2VmaGlqa2xtcHN5ent+f4CCg4SIiYqOj5CRkpOVlpeYmZucnZ6foKGio6Slpgi1PdgAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAIjSURBVFhH7Zf/U9JwGMfH2ApkMtBcWRlKoUColRVWOBUxERS/YEMJ0Vxs7NP//3vPPow5XHAnz+76wb1+HHevY+977t57M0CADXI8Fi7IBkwZ6LjQpBjHIk6GOCoM8BFpfjGdwZFenJciPAgDXGQ2m5eLJRxFOZ+djcA/ZEMz2UKlrjRwKPVKITsTYpmgkMhXm2pHw9FRm9V8QggynJiSz1TyBwtRz+SUyDF8LL2jdKyHGDrKTjrGM3w8U2po1jMMWqOUifu+sfF9OHwfDt+Hw/fh8H04fB8O34fjofo8/h73ei8494zeNf4hJkZXp5tlFPaece6tZlvtuoREv2ld0E01CntvOfbgbrl2rhqWpg/R2vXK3m5v9Q3H3oOOvbq8tlFrdy2PBdFax8VPq297q3Q49l517Oknr9bKTd0S9SB6+3jzfUKaopt5FPaeBqG198PTue/ng6do/Drdfvci+phO+pHc7n0b92mT343yx7lo7z3ujctHtJ8HX9/EH42nc/kgvCM59zTMWr/fl7s+M7zV5/QIxuKODxceMOhDhgcM+LDhAQM+bHiA04cOD3D4iH55iAsPcPjgbbdWUOEBtz76ti8FTHiA7cOfCqXv8+BUKP2q8+BUKLTqbgxDVdCnQqFVd3F99WP/y2t0eACtuv2T2t76koQOD6BV9/nb+oekNIEOz8SsukRy4ZkY9kRHq06ICmHeVS3jYladu6j+GwzzF++t8/cAdhQUAAAAAElFTkSuQmCC"
+       preserveAspectRatio="none"
+       id="img1" />
+    <clipPath
+       id="clip2">
+      <rect
+         x="265"
+         y="188"
+         width="79"
+         height="75"
+         id="rect6" />
+    </clipPath>
+  </defs>
+  <g
+     id="g238"
+     transform="matrix(0.72222588,0,0,0.72222588,-131.88468,-124.38639)">
+    <path
+       d="m 327.56978,332.54498 -2.32033,-23.4281 c 31.1731,-11.26959 40.45636,-34.84577 20.73469,-52.65901 -19.72175,-17.81324 -60.98007,-23.11795 -92.15328,-11.84843 -31.17321,11.26954 -40.45643,34.84582 -20.73468,52.65905 14.55649,13.14796 41.62223,19.93071 68.40878,17.1438 z"
+       stroke="#767171"
+       stroke-width="5.72497"
+       stroke-miterlimit="8"
+       fill="#afabab"
+       fill-rule="evenodd"
+       id="path19" />
+    <path
+       d="m 327.56921,185.36103 -2.32052,22.84262 c 31.17435,10.98812 40.45643,33.97386 20.73583,51.34341 -19.72251,17.36765 -60.98045,22.5392 -92.15289,11.55108 -31.17436,-10.98812 -40.45644,-33.97387 -20.73584,-51.34151 14.55669,-12.82011 41.62243,-19.43245 68.40955,-16.7169 z"
+       stroke="#4472c4"
+       stroke-width="5.72497"
+       stroke-miterlimit="8"
+       fill="#1e97ea"
+       fill-rule="evenodd"
+       id="path21" />
+    <g
+       clip-path="url(#clip2)"
+       id="g25"
+       transform="matrix(1.9083225,0,0,1.9083225,-333.52714,-151.55522)">
+      <use
+         width="100%"
+         height="100%"
+         xlink:href="#img1"
+         transform="translate(265,188)"
+         id="use23"
+         x="0"
+         y="0" />
+    </g>
+    <path
+       d="m 183.62826,218.65934 h 21.31023 v 0 h 31.96441 74.58297 v 44.52689 0 19.08323 12.72279 H 236.9029 l -31.80411,43.21587 -0.1603,-43.21587 h -21.31023 v -12.72279 -19.08323 0 z"
+       fill="#512bd4"
+       fill-rule="evenodd"
+       id="path27"
+       style="stroke-width:1.90832" />
+    <text
+       fill="#ffffff"
+       font-family="'Open Sans', 'Open Sans_MSFontService', sans-serif"
+       font-weight="400"
+       font-size="55.3414px"
+       id="text29"
+       x="200.3757"
+       y="277.81735"
+       style="stroke-width:1.90832">Net</text>
+  </g>
+</svg>

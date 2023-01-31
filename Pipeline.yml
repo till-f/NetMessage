@@ -4,7 +4,7 @@ variables:
   ${{ else }}:
     versionKind: 'pre'
 
-name: 1.0.0-$(versionKind)$(Rev:r)
+name: 1.0.0-$(versionKind)$(Rev:rrr)
 
 trigger:
 - main
@@ -85,7 +85,6 @@ jobs:
     inputs:
       targetPath: '$(Agent.TempDirectory)\TestResults'
       artifactName: 'TestResults'
-    condition: succeededOrFailed()
 
   - task: PublishCodeCoverageResults@1
     displayName: 'Publish Code Coverage'
