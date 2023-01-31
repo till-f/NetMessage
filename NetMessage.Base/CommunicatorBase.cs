@@ -285,10 +285,13 @@ namespace NetMessage.Base
       // Only if an exception occurs inside an OnError handler, this exception would stop the receive task more or less silently.
       // By default, this is what happens, but the user may set FailOnFaultedReceiveTask='true' to avoid this. In that case, we
       // fail/crash the environment if the task faulted.
-      if (FailOnFaultedReceiveTask)
+      receiveTask.ContinueWith(c =>
       {
-        receiveTask.ContinueWith(c => Environment.FailFast($"Receive task faulted: {c.Exception?.Message}", c.Exception), TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
-      }
+        if (FailOnFaultedReceiveTask)
+        {
+          Environment.FailFast($"Receive task faulted: {c.Exception?.Message}", c.Exception);
+        }
+      }, TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
     }
 
     /// <summary>
