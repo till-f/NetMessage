@@ -41,6 +41,14 @@ namespace NetMessage.Examples.TypeSafe.Server
             }
             RequestAndResponseExample();
             break;
+          case 'd':
+            if (_openSession == null)
+            {
+              Console.WriteLine("Client not connected.");
+              break;
+            }
+            _openSession.Disconnect();
+            break;
         }
       }
       
