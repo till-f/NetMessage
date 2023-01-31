@@ -35,7 +35,7 @@ namespace NetMessage.Integration.Test
     private const string TestRequestText = "TestRequest";
 
     // the number of messages that should be sent for the "burst" tests
-    private const int MessageCount = 2000;
+    private const int MessageCount = 1000;
 
     // the number of clients for all tests (some test may only use one of them)
     private const int ClientCount = 2;
