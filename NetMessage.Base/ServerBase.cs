@@ -33,6 +33,16 @@ namespace NetMessage.Base
     }
 
     /// <summary>
+    /// Specifies the timeout, in milliseconds, with no activity until the first keep-alive packet is sent.
+    /// </summary>
+    public uint KeepAliveTime { get; set; } = Defaults.KeepAliveTime;
+
+    /// <summary>
+    /// Specifies the interval, in milliseconds, between when successive keep-alive packets are sent if no acknowledgement was received.
+    /// </summary>
+    public uint KeepAliveInterval { get; set; } = Defaults.KeepAliveInterval;
+
+    /// <summary>
     /// The ResponseTimeout used for all sessions.
     /// See <see cref="CommunicatorBase{TRequest, TProtocol, TData}.ResponseTimeout"/>.
     /// </summary>

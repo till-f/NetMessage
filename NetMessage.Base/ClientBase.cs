@@ -20,6 +20,16 @@ namespace NetMessage.Base
     public event Action<TClient, TRequest>? RequestReceived;
 
     /// <summary>
+    /// Specifies the timeout, in milliseconds, with no activity until the first keep-alive packet is sent.
+    /// </summary>
+    public uint KeepAliveTime { get; set; } = Defaults.KeepAliveTime;
+
+    /// <summary>
+    /// Specifies the interval, in milliseconds, between when successive keep-alive packets are sent if no acknowledgement was received.
+    /// </summary>
+    public uint KeepAliveInterval { get; set; } = Defaults.KeepAliveInterval;
+
+    /// <summary>
     /// Called to create a protocol buffer that is used exclusively for one session.
     /// The returned instance must not be shared.
     /// </summary>
@@ -46,7 +56,8 @@ namespace NetMessage.Base
             ResetConnectionState();
 
             _remoteSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-            _remoteSocket.LingerState = new LingerOption(true, 0);  // discard queued data when disconnect and reset the connection
+            _remoteSocket.LingerState = new LingerOption(true, 0);  // discard queued data when socket is shut down and reset the connection
+            _remoteSocket.SetTcpKeepAlive(KeepAliveTime, KeepAliveInterval);
             _protocolBuffer = CreateProtocolBuffer();
             var connectTask = _remoteSocket.ConnectAsync(remoteHost, remotePort);
             connectTask.Wait();
