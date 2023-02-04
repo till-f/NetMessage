@@ -29,30 +29,28 @@ namespace NetMessage.Integration.Test
   {
     // host, port and some dummy data for testing
     private const string ServerHost = "127.0.0.1";
-    private const int ResponseTimeoutMs = 500;
-    private const int ResponseTimeoutMaxDiscr = 50;
+    private const int ServerPort = 1234;
+    private const int ResponseTimeoutMs = 100;
+    private const int ResponseTimeoutMaxDiscr = 20;
     private const string TestMessageText = "TestMessage";
     private const string TestRequestText = "TestRequest";
 
     // the number of messages that should be sent for the "burst" tests
     private const int MessageCount = 1000;
 
-    // the number of clients for all tests (some test may only use one of them)
+    // the number of clients (some test may only use one of them)
     private const int ClientCount = 2;
 
-    // the listening port used by the server; is incremented after each tests to ensure that ports are not reused
-    private static int _serverPort = 1000;
-
-    // the server and all clients are constructed and connected when test methods are entered
+    // the server and all clients are constructed and connected in TestInitialize
     private NetMessageServer? _server;
     private readonly NetMessageClient[] _clients = new NetMessageClient[ClientCount];
     private readonly NetMessageSession[] _sessions = new NetMessageSession[ClientCount];
 
-    // all elements are zero when test methods are entered
+    // memento for the number of received messages/requests; initialized with zero in TestInitialize
     private readonly int[] _receivedMessagesCount = new int[ClientCount];
     private readonly int[] _receivedRequestsCount = new int[ClientCount];
 
-    // all wait tokens are must be set 'ClientCount' times before they fire
+    // wait token for the 'burst' tests; used to wait until all ('MessageCount') messages were received; initialized in TestInitialize
     private readonly WaitToken[] _receivedMessageWaitToken = new WaitToken[ClientCount];
     private readonly WaitToken[] _receivedRequestWaitToken = new WaitToken[ClientCount];
 
@@ -63,14 +61,14 @@ namespace NetMessage.Integration.Test
     // may be used to avoid failing tests in edge cases (see class comment)
     private bool _ignoreServerErrors;
 
-    // already set when test methods are entered; if used by tests, a new WaitToken should be constructed
+    // can be used wait for a session being opened / closed, but a new wait token must be constructed by the test
     private WaitToken? _sessionOpenedWt;
     private WaitToken? _sessionClosedWt;
 
     [TestInitialize]
     public void TestInitialize()
     {
-      _server = new NetMessageServer(++_serverPort);
+      _server = new NetMessageServer(ServerPort);
       _server.ResponseTimeout = TimeSpan.FromMilliseconds(ResponseTimeoutMs);
       _server.FailOnFaultedReceiveTask = true;
       _server.OnError += OnServerError;
@@ -129,7 +127,7 @@ namespace NetMessage.Integration.Test
     [TestMethod]
     public void ConnectOfConnectedClient()
     {
-      var task = _clients[0].ConnectAsync(ServerHost, _serverPort);
+      var task = _clients[0].ConnectAsync(ServerHost, ServerPort);
       task.WaitAndAssert("Connect task did not succeed");
       Assert.IsFalse(task.Result, "Connecting of already connected client did not return false");
     }
@@ -259,7 +257,7 @@ namespace NetMessage.Integration.Test
     private void ConnectClient(int clientIndex)
     {
       _sessionOpenedWt = new WaitToken(1);
-      var task = _clients[clientIndex].ConnectAsync(ServerHost, _serverPort);
+      var task = _clients[clientIndex].ConnectAsync(ServerHost, ServerPort);
       task.WaitAndAssert($"Client {clientIndex} did not connect");
       Assert.IsTrue(task.Result);
       Assert.IsTrue(_clients[clientIndex].IsConnected);
@@ -341,7 +339,6 @@ namespace NetMessage.Integration.Test
 
     private void SendRequestBurst(object communicator)
     {
-      var taskList = new List<Task<TestResponse>>();
       for (int i = 0; i < MessageCount; i++)
       {
         Task<TestResponse> requestTask;
@@ -358,15 +355,9 @@ namespace NetMessage.Integration.Test
           throw new AssertFailedException($"Send request from unexpected communicator: {communicator}");
         }
 
-        taskList.Add(requestTask);
-      }
-
-      foreach (var task in taskList)
-      {
-        var taskIndex = taskList.IndexOf(task);
-        var result = task.WaitAndAssert($"Message from task {taskIndex} was not sent successfully");
+        var result = requestTask.WaitAndAssert($"Message from task {i} was not sent successfully");
         Assert.AreEqual(TestRequestText.ToLowerInvariant(), result.ResponseText, "Unexpected ResponseText received");
-        Assert.AreEqual(taskIndex, result.ResponseCount, "Unexpected ResponseCount received");
+        Assert.AreEqual(i, result.ResponseCount, "Unexpected ResponseCount received");
       }
     }
 
