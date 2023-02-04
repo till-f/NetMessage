@@ -1,4 +1,4 @@
-﻿namespace NetMessage.Base.Message
+﻿namespace NetMessage.Base.Packets
 {
   public class Message<TData> : IPacket<TData>
   {

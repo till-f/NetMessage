@@ -1,5 +1,5 @@
 ﻿using NetMessage.Base;
-using NetMessage.Base.Message;
+using NetMessage.Base.Packets;
 using System;
 using System.Collections.Generic;
 

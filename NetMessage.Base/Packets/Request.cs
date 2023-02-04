@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace NetMessage.Base.Message
+namespace NetMessage.Base.Packets
 {
   public abstract class Request<TRequest, TProtocol, TData> : IPacket<TData>
     where TRequest : Request<TRequest, TProtocol, TData>

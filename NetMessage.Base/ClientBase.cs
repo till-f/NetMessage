@@ -1,4 +1,4 @@
-﻿using NetMessage.Base.Message;
+﻿using NetMessage.Base.Packets;
 using System;
 using System.Net.Sockets;
 using System.Threading.Tasks;

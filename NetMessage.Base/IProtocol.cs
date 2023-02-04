@@ -1,4 +1,4 @@
-﻿using NetMessage.Base.Message;
+﻿using NetMessage.Base.Packets;
 using System.Collections.Generic;
 
 namespace NetMessage.Base
