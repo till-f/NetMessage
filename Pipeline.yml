@@ -63,8 +63,7 @@ jobs:
       platform: '$(buildPlatform)'
       configuration: '$(buildConfiguration)'
       resultsFolder: '$(Agent.TempDirectory)\TestResults'
-      otherConsoleOptions: '/collect:"Code Coverage;Format=Cobertura"'
-      codeCoverageEnabled: true
+      runSettingsFile: '$(Build.SourcesDirectory)\Tests.runsettings'
 
   - task: CopyFiles@2
     displayName: 'Copy Artifacts'
