@@ -9,42 +9,20 @@ using NetMessage.Integration.Test.TestFramework;
 namespace NetMessage.Integration.Test
 {
   /// <summary>
-  /// Test class for integration tests of <see cref="NetMessageClient"/> and <see cref="NetMessageServer"/>.
-  /// For all tests, it maintains one server and N clients + respective sessions and keeps track of received messages.
-  /// Additionally, it keeps track of the last opened/closed sessions and provides a <see cref="WaitToken"/> so that
-  /// tests can wait for such events or received messages.
+  /// Test class for integration tests of <see cref="NetMessageClient"/> and <see cref="NetMessageServer"/> with a
+  /// "default" server and clients.
+  /// 
+  /// For all tests, it keeps track of received packets and provides a <see cref="WaitToken"/> so that tests can wait for
+  /// received packets.
   ///
-  /// The <see cref="TestInitialize"/> method will create all instances (including default WaitTokens) and connects
-  /// all clients to the server.
-  ///
-  /// The server and all client have the <see cref="CommunicatorBase{TRequest,TProtocol,TData}.FailOnFaultedReceiveTask"/>
-  /// property set to true and a throwing handler is registered for the OnError event. This means that the the test
-  /// framework is killed on every receive error. The original exception (if any) is contained as inner exception to support
-  /// debugging (Note that Visual Studio does not show the exception or stack trace in the Test Explorer if the framework fails,
-  /// so it may be necessary to check the Output window for Tests). For similar reasons, tests will also fail on every send error.
-  /// To avoid spurious failing tests when test cleanup is called, <see cref="_ignoreServerErrors"/> may be used in edge cases.
+  /// The test initialize method will setup the WaitTokens and received packet counts and connects all clients to the server.
+  /// Note that additional setup is performed by the base class.
   /// </summary>
   [TestClass]
-  public class IntegrationTests : TestBase
+  public class DefaultTests : TestBase
   {
-    // host, port and some dummy data for testing
-    private const string ServerHost = "127.0.0.1";
-    private const int ServerPort = 1234;
-    private const int ResponseTimeoutMs = 100;
-    private const int ResponseTimeoutMaxDiscr = 20;
-    private const string TestMessageText = "TestMessage";
-    private const string TestRequestText = "TestRequest";
-
     // the number of messages that should be sent for the "burst" tests
     private const int MessageCount = 1000;
-
-    // the number of clients (some test may only use one of them)
-    private const int ClientCount = 2;
-
-    // the server and all clients are constructed and connected in TestInitialize
-    private NetMessageServer? _server;
-    private readonly NetMessageClient[] _clients = new NetMessageClient[ClientCount];
-    private readonly NetMessageSession[] _sessions = new NetMessageSession[ClientCount];
 
     // memento for the number of received messages/requests; initialized with zero in TestInitialize
     private readonly int[] _receivedMessagesCount = new int[ClientCount];
@@ -54,34 +32,13 @@ namespace NetMessage.Integration.Test
     private readonly WaitToken[] _receivedMessageWaitToken = new WaitToken[ClientCount];
     private readonly WaitToken[] _receivedRequestWaitToken = new WaitToken[ClientCount];
 
-    // always contains the last opened/closed session
-    private NetMessageSession? _lastOpenedSession;
-    private NetMessageSession? _lastClosedSession;
-
-    // may be used to avoid failing tests in edge cases (see class comment)
-    private bool _ignoreServerErrors;
-
-    // can be used wait for a session being opened / closed, but a new wait token must be constructed by the test
-    private WaitToken? _sessionOpenedWt;
-    private WaitToken? _sessionClosedWt;
-
     [TestInitialize]
     public void TestInitialize()
     {
-      _server = new NetMessageServer(ServerPort);
-      _server.ResponseTimeout = TimeSpan.FromMilliseconds(ResponseTimeoutMs);
-      _server.FailOnFaultedReceiveTask = true;
-      _server.OnError += OnServerError;
-      _server.SessionOpened += OnSessionOpened;
-      _server.SessionClosed += OnSessionClosed;
-      _server.Start();
+      _server!.Start();
 
       for (int i = 0; i < ClientCount; i++)
       {
-        _clients[i] = new NetMessageClient();
-        _clients[i].ResponseTimeout = TimeSpan.FromMilliseconds(ResponseTimeoutMs);
-        _clients[i].FailOnFaultedReceiveTask = true;
-        _clients[i].OnError += OnCommunicatorError;
         _receivedMessagesCount[i] = 0;
         _receivedRequestsCount[i] = 0;
         _receivedMessageWaitToken[i] = new WaitToken(MessageCount);
@@ -89,18 +46,6 @@ namespace NetMessage.Integration.Test
 
         ConnectClient(i);
       }
-    }
-
-    [TestCleanup]
-    public void TestCleanup()
-    {
-      for (int i = 0; i < ClientCount; i++)
-      {
-        _clients[i].Disconnect();
-      }
-
-      _server!.Stop();
-      _server!.Dispose();
     }
 
     [TestMethod]
@@ -158,7 +103,8 @@ namespace NetMessage.Integration.Test
       await SendRequestAndExpectTimeout(_clients[0], 1); // same requestCount as in previous message, because previous one was not received
       _receivedRequestWaitToken[0].WaitAndAssert("Request was not received by server");
 
-      // TestCleanup() will disconnect the client in the next step, but the server might still try to send the response (our timeout/threshold is pretty tight)
+      // test cleanup will disconnect the client in the next step, but the server might still try to send the response
+      // (this is a race condition that's hard to avoid, so just ignore upcoming errors)
       _ignoreServerErrors = true;
     }
 
@@ -252,23 +198,6 @@ namespace NetMessage.Integration.Test
 
       _receivedRequestWaitToken[0].WaitAndAssert("Not all messages from session 0 were received");
       _receivedRequestWaitToken[1].WaitAndAssert("Not all messages from session 1 were received");
-    }
-
-    private void ConnectClient(int clientIndex)
-    {
-      _sessionOpenedWt = new WaitToken(1);
-      var task = _clients[clientIndex].ConnectAsync(ServerHost, ServerPort);
-      task.WaitAndAssert($"Client {clientIndex} did not connect");
-      Assert.IsTrue(task.Result);
-      Assert.IsTrue(_clients[clientIndex].IsConnected);
-      _sessionOpenedWt.WaitAndAssert($"No session was opened after connection of client {clientIndex}");
-
-      if (_lastOpenedSession == null)
-      {
-        throw new AssertFailedException("Last opened session memento was null after connection");
-      }
-
-      _sessions[clientIndex] = _lastOpenedSession;
     }
 
     private async Task SendRequestAndExpectTimeout(object communicator, int requestCount)
@@ -400,59 +329,5 @@ namespace NetMessage.Integration.Test
 
       throw new AssertFailedException($"Unexpected communicator object: {communicator}");
     }
-
-    private void OnServerError(NetMessageServer server, NetMessageSession? session, string errorMessage, Exception? ex)
-    {
-      OnCommunicatorError(server, errorMessage, ex);
-    }
-
-    private void OnCommunicatorError(object communicator, string errorMessage, Exception? ex)
-    {
-      if (_ignoreServerErrors)
-      {
-        return;
-      }
-
-      errorMessage = $"{communicator.GetType().Name} error: {errorMessage}";
-      if (ex != null)
-      {
-        errorMessage += $" - {ex.GetType().Name}: {ex.Message}";
-      }
-
-      throw new AssertFailedException(errorMessage, ex);
-    }
-
-    private void OnSessionOpened(NetMessageSession session)
-    {
-      _lastOpenedSession = session;
-      _sessionOpenedWt?.Signal();
-    }
-
-    private void OnSessionClosed(NetMessageSession session)
-    {
-      _lastClosedSession = session;
-      _sessionClosedWt?.Signal();
-    }
-  }
-
-  public class TestMessage
-  {
-    public string? MessageText { get; set; }
-
-    public int MessageCount { get; set; }
-  }
-
-  public class TestRequest : IRequest<TestResponse>
-  {
-    public string? RequestText { get; set; }
-
-    public int RequestCount { get; set; }
-  }
-
-  public class TestResponse
-  {
-    public string? ResponseText { get; set; }
-    
-    public int ResponseCount { get; set; }
   }
 }
