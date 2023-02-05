@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NetMessage.Base;
+using System;
 using System.IO;
 using System.Text;
 using System.Xml;
@@ -32,7 +33,7 @@ namespace NetMessage
 
     public Encoding ProtocolEncoding { get; }
 
-    public string ProtocolTerminator { get; } = TypedProtocol.DefaultTerminator;
+    public string ProtocolTerminator { get; } = Defaults.Terminator;
 
     public T Deserialize<T>(string dataString)
     {

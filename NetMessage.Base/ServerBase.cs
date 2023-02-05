@@ -33,14 +33,23 @@ namespace NetMessage.Base
     }
 
     /// <summary>
-    /// Specifies the timeout, in milliseconds, with no activity until the first keep-alive packet is sent.
+    /// Specifies the receive timeout for all sessions, see <see cref="CommunicatorBase{TRequest,TProtocol,TData}.ReceiveTimeout"/>.
+    /// A value smaller or equal zero disables the receive timeout. In that case, the client heartbeat should be disabled, too,
+    /// so that TCP's native keep alive mechanism is used. Note that a connection loss might not be detected quickly then.
     /// </summary>
-    public uint KeepAliveTime { get; set; } = Defaults.KeepAliveTime;
+    public TimeSpan ReceiveTimeout { get; set; } = Defaults.ReceiveTimeout;
 
     /// <summary>
-    /// Specifies the interval, in milliseconds, between when successive keep-alive packets are sent if no acknowledgement was received.
+    /// Only applicable if receive timeout is disabled.
+    /// Specifies the timeout with no activity until the first keep-alive packet is sent. A value smaller or equal zero turns off keep alive.
     /// </summary>
-    public uint KeepAliveInterval { get; set; } = Defaults.KeepAliveInterval;
+    public TimeSpan KeepAliveTime { get; set; } = Defaults.KeepAliveTime;
+
+    /// <summary>
+    /// Only applicable if receive timeout is disabled.
+    /// Specifies the interval between when successive keep-alive packets are sent if no acknowledgement was received.
+    /// </summary>
+    public TimeSpan KeepAliveInterval { get; set; } = Defaults.KeepAliveInterval;
 
     /// <summary>
     /// The ResponseTimeout used for all sessions.

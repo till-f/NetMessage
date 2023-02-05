@@ -42,5 +42,12 @@ namespace NetMessage.Base
     /// <see cref="CommunicatorBase{TRequest, TProtocol, TData}.SendRequestInternalAsync(TData)"/>
     /// </summary>
     byte[] ToRawResponse(TData data, int responseId);
+
+    /// <summary>
+    /// Returns the heartbeat packet. If the protocol does not support
+    /// heartbeats, this method should throw and the client should set
+    /// <see cref="ClientBase{TClient, TRequest, TProtocol, TData}.HeartbeatInterval"/> to infinite.
+    /// </summary>
+    byte[] HeartbeatPacket { get; }
   }
 }

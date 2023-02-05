@@ -22,8 +22,6 @@ namespace NetMessage
   // Response  <TypeId:ResonseId:DataString
   public class TypedProtocol : IProtocol<TypedDataString>
   {
-    public const string DefaultTerminator = "\u0004";
-
     private const char SeparatorToken = ':';
     private const char RequestToken = '>';
     private const char ResponseToken = '<';
@@ -38,7 +36,9 @@ namespace NetMessage
     /// <summary>
     /// The termination sequence (default is the EOT character, ASCII code 0x4)
     /// </summary>
-    public string Terminator { get; set; } = DefaultTerminator;
+    public string Terminator { get; set; } = Defaults.Terminator;
+
+    public byte[] HeartbeatPacket => Encoding.GetBytes(Terminator);
 
     public IList<IPacket<TypedDataString>> FromRaw(byte[] rawData)
     {
@@ -49,19 +49,24 @@ namespace NetMessage
       var offset = 0;
       while (offset < text.Length)
       {
-        var eotPos = text.IndexOf(Terminator, offset, StringComparison.Ordinal);
+        var terminatorPos = text.IndexOf(Terminator, offset, StringComparison.Ordinal);
 
-        if (eotPos == -1)
+        if (terminatorPos == -1)
         {
           _buffer = _buffer + text.Substring(offset);
           break;
         }
+        else if (terminatorPos == offset)
+        {
+          // empty message / heartbeat (only terminator was transferred)
+          offset = terminatorPos + Terminator.Length;
+        }
         else
         {
-          var rawString = _buffer + text.Substring(offset, eotPos-offset);
+          var rawString = _buffer + text.Substring(offset, terminatorPos-offset);
           messages.Add(ParseMessage(rawString));
           _buffer = string.Empty;
-          offset = eotPos + Terminator.Length;
+          offset = terminatorPos + Terminator.Length;
         }
       }
 
