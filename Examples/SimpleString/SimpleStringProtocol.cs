@@ -30,7 +30,7 @@ namespace NetMessage.Examples.SimpleString
     /// <summary>
     /// The used encoding (default is UTF8)
     /// </summary>
-    public Encoding Encoding { get; set; } = Encoding.UTF8;
+    public Encoding Encoding { get; set; } = Defaults.Encoding;
 
     /// <summary>
     /// The termination sequence (default is the EOT character, ASCII code 0x4)

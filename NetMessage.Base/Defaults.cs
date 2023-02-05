@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Text;
 
 namespace NetMessage.Base
 {
   public static class Defaults
   {
     public const string Terminator = "\u0004";
+
+    public static readonly Encoding Encoding = Encoding.UTF8;
 
     public static readonly TimeSpan ResponseTimeout = TimeSpan.FromSeconds(10);
 

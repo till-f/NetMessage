@@ -11,7 +11,7 @@ namespace NetMessage.Base
     where TRequest : Request<TRequest, TProtocol, TData>
     where TProtocol : class, IProtocol<TData>
   {
-    private readonly System.Timers.Timer _heartbeatTimer = new System.Timers.Timer();
+    private readonly Timer _heartbeatTimer = new Timer();
 
     private Socket? _remoteSocket;
     private TProtocol? _protocolBuffer;

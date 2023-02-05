@@ -1,5 +1,4 @@
 ﻿using NetMessage.Base;
-using System;
 using System.IO;
 using System.Text;
 using System.Xml;
@@ -15,33 +14,12 @@ namespace NetMessage
   {
     private static readonly XmlSerializerNamespaces _emptyNs = new XmlSerializerNamespaces(new[] { XmlQualifiedName.Empty });
 
-    private readonly bool _useBase64;
-
-    public XmlDataSerializer(bool useBase64 = false)
-    {
-      _useBase64 = useBase64;
-
-      if (useBase64)
-      {
-        ProtocolEncoding = Encoding.ASCII;
-      }
-      else
-      {
-        ProtocolEncoding = Encoding.UTF8;
-      }
-    }
-
-    public Encoding ProtocolEncoding { get; }
+    public Encoding ProtocolEncoding { get; } = Defaults.Encoding;
 
     public string ProtocolTerminator { get; } = Defaults.Terminator;
 
     public T Deserialize<T>(string dataString)
     {
-      if (_useBase64)
-      {
-        dataString = Encoding.UTF8.GetString(Convert.FromBase64String(dataString));
-      }
-
       using (TextReader dataStream = new StringReader(dataString))
       {
         var serializer = new XmlSerializer(typeof(T));
@@ -62,11 +40,6 @@ namespace NetMessage
       {
         var serializer = new XmlSerializer(o.GetType());
         serializer.Serialize(writer, o, _emptyNs);
-
-        if (_useBase64)
-        {
-          return Convert.ToBase64String(Encoding.UTF8.GetBytes(stream.ToString()));
-        }
 
         return stream.ToString();
       }
