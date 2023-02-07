@@ -1,4 +1,4 @@
-﻿using NetMessage.Base.Message;
+﻿using NetMessage.Base.Packets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,6 +31,25 @@ namespace NetMessage.Base
     {
       _endPoint = new IPEndPoint(IPAddress.Any, listeningPort);
     }
+
+    /// <summary>
+    /// Specifies the receive timeout for all sessions, see <see cref="CommunicatorBase{TRequest,TProtocol,TData}.ReceiveTimeout"/>.
+    /// A value smaller or equal zero disables the receive timeout. In that case, the client heartbeat should be disabled, too,
+    /// so that TCP's native keep alive mechanism is used. Note that a connection loss might not be detected quickly then.
+    /// </summary>
+    public TimeSpan ReceiveTimeout { get; set; } = Defaults.ReceiveTimeout;
+
+    /// <summary>
+    /// Only applicable if receive timeout is disabled.
+    /// Specifies the timeout with no activity until the first keep-alive packet is sent. A value smaller or equal zero turns off keep alive.
+    /// </summary>
+    public TimeSpan KeepAliveTime { get; set; } = Defaults.KeepAliveTime;
+
+    /// <summary>
+    /// Only applicable if receive timeout is disabled.
+    /// Specifies the interval between when successive keep-alive packets are sent if no acknowledgement was received.
+    /// </summary>
+    public TimeSpan KeepAliveInterval { get; set; } = Defaults.KeepAliveInterval;
 
     /// <summary>
     /// The ResponseTimeout used for all sessions.

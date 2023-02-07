@@ -63,8 +63,7 @@ jobs:
       platform: '$(buildPlatform)'
       configuration: '$(buildConfiguration)'
       resultsFolder: '$(Agent.TempDirectory)\TestResults'
-      otherConsoleOptions: '/collect:"Code Coverage;Format=Cobertura"'
-      codeCoverageEnabled: true
+      runSettingsFile: '$(Build.SourcesDirectory)\Tests.runsettings'
 
   - task: CopyFiles@2
     displayName: 'Copy Artifacts'
@@ -85,10 +84,12 @@ jobs:
     inputs:
       targetPath: '$(Agent.TempDirectory)\TestResults'
       artifactName: 'TestResults'
+    condition: succeededOrFailed()
 
   - task: PublishCodeCoverageResults@1
     displayName: 'Publish Code Coverage'
     inputs:
       codeCoverageTool: 'Cobertura'
       summaryFileLocation: '$(Agent.TempDirectory)\TestResults\*\In\*\*.cobertura.xml'
+    condition: succeededOrFailed()
         

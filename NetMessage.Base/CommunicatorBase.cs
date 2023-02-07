@@ -1,4 +1,4 @@
-﻿using NetMessage.Base.Message;
+﻿using NetMessage.Base.Packets;
 using System;
 using System.Collections.Concurrent;
 using System.Net.Sockets;
@@ -19,18 +19,25 @@ namespace NetMessage.Base
     private int _responseIdCounter;
 
     /// <summary>
-    /// The time to wait for the response after sending a request before a TimeoutException is thrown.
-    /// Use a TimeSpan that represents -1 millisecond to wait indefinitely.
-    /// The default value is 10 seconds.
+    /// Specifies the time to wait for a client packet before assuming connection loss.
+    /// A value smaller or equal zero disables the receive timeout. Clients should not use a receive timeout
+    /// because the server will not send heartbeats. Instead, they can detect a connection loss when sending
+    /// the heartbeat failed.
     /// </summary>
-    public virtual TimeSpan ResponseTimeout { get; set; } = Defaults.ResponseTimeout;
+    public TimeSpan ReceiveTimeout { get; set; } = Timeout.InfiniteTimeSpan;
+
+    /// <summary>
+    /// The time to wait for the response after sending a request before a TimeoutException is thrown.
+    /// Use a TimeSpan that represents -1 millisecond to wait indefinitely (i.e., Timeout.InfiniteTimeSpan).
+    /// </summary>
+    public TimeSpan ResponseTimeout { get; set; } = Defaults.ResponseTimeout;
 
     /// <summary>
     /// If true, the environment/application will be terminated if the receive task faulted. This may
     /// only happens if a handler of the OnError event fails. The default value is 'false' which means
     /// that the receive task still dies but the application keeps running.
     /// </summary>
-    public virtual bool FailOnFaultedReceiveTask { get; set; }
+    public bool FailOnFaultedReceiveTask { get; set; }
     
     /// <summary>
     /// Used to retrieve the remote socket.
@@ -223,7 +230,13 @@ namespace NetMessage.Base
           {
             var buffer = new ArraySegment<byte>(new byte[RemoteSocket!.ReceiveBufferSize]);
             var singleReceiveTask = RemoteSocket.ReceiveAsync(buffer, SocketFlags.None);
-            singleReceiveTask.Wait(CancellationToken);
+            int receiveTimeoutInms = ReceiveTimeout.IsInfinite() ? -1 : (int)ReceiveTimeout.TotalMilliseconds;
+            var completedInTime = singleReceiveTask.Wait(receiveTimeoutInms, CancellationToken);
+
+            if (!completedInTime)
+            {
+              throw new ConnectionLostException($"No heartbeat was received after {receiveTimeoutInms} ms");
+            }
 
             if (!singleReceiveTask.IsCompleted || singleReceiveTask.IsFaulted)
             {
@@ -271,7 +284,7 @@ namespace NetMessage.Base
           }
           catch (Exception ex)
           {
-            if (HandleReceiveException(ex)) return;
+            if (HandleReceiveOrHeartbeatException(ex)) return;
           }
         }
       }, CancellationToken);
@@ -293,11 +306,19 @@ namespace NetMessage.Base
     /// Handler for exceptions in the async receive tasks.
     /// Returns true to indicate that the receive should be aborted.
     /// </summary>
-    protected bool HandleReceiveException(Exception ex)
+    protected bool HandleReceiveOrHeartbeatException(Exception ex)
     {
       // CancellationToken was triggered. This is not an error (do not notify about it)
       if (ex is OperationCanceledException)
       {
+        return true;
+      }
+
+      // Connection was lost (receive timed out because no heartbeat was received)
+      if (ex is ConnectionLostException cle)
+      {
+        NotifyError($"Connection lost: {cle.Message}", cle);
+        Close();
         return true;
       }
 

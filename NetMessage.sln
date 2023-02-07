@@ -36,6 +36,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_Solution", "_Solution", "{
 		LICENSE = LICENSE
 		Pipeline.yml = Pipeline.yml
 		README.md = README.md
+		Tests.runsettings = Tests.runsettings
 	EndProjectSection
 EndProject
 Global

@@ -1,4 +1,4 @@
-﻿using NetMessage.Base.Message;
+﻿using NetMessage.Base.Packets;
 using System.Threading.Tasks;
 
 namespace NetMessage.Examples.SimpleString

@@ -1,5 +1,5 @@
 ﻿using System;
-using NetMessage.Base.Message;
+using NetMessage.Base.Packets;
 
 namespace NetMessage.Examples.SimpleString.Client
 {

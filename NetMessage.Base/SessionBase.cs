@@ -1,4 +1,4 @@
-﻿using NetMessage.Base.Message;
+﻿using NetMessage.Base.Packets;
 using System;
 using System.Net;
 using System.Net.Sockets;
@@ -23,7 +23,19 @@ namespace NetMessage.Base
     {
       Server = server;
       _remoteSocket = remoteSocket;
-      _remoteSocket.LingerState = new LingerOption(true, 0);  // discard queued data when disconnect and reset the connection
+      _remoteSocket.LingerState = new LingerOption(true, 0);  // discard queued data when socket is shut down and reset the connection
+      if (server.ReceiveTimeout.IsInfinite())
+      {
+        _remoteSocket.SetTcpKeepAlive(server.KeepAliveTime, server.KeepAliveInterval);
+      }
+      else
+      {
+        ReceiveTimeout = server.ReceiveTimeout;
+        _remoteSocket.SetTcpKeepAlive(TimeSpan.Zero, TimeSpan.Zero);
+      }
+      ResponseTimeout = server.ResponseTimeout;
+      FailOnFaultedReceiveTask = server.FailOnFaultedReceiveTask;
+
       _protocolBuffer = protocolBuffer;
       RemoteEndPoint = (IPEndPoint)_remoteSocket.RemoteEndPoint;
       StartReceiveAsync();
@@ -34,30 +46,6 @@ namespace NetMessage.Base
     public TServer? Server { get; private set; }
 
     public IPEndPoint? RemoteEndPoint { get; private set; }
-
-    public override TimeSpan ResponseTimeout
-    {
-      get => Server?.ResponseTimeout ?? Defaults.ResponseTimeout;
-      set
-      {
-        if (Server != null)
-        {
-          Server.ResponseTimeout = value;
-        }
-      }
-    }    
-    
-    public override bool FailOnFaultedReceiveTask
-    {
-      get => Server?.FailOnFaultedReceiveTask ?? false;
-      set
-      {
-        if (Server != null)
-        {
-          Server.FailOnFaultedReceiveTask = value;
-        }
-      }
-    }
 
     protected override Socket? RemoteSocket => _remoteSocket;
 
