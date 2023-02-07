@@ -25,5 +25,10 @@ namespace NetMessage.Integration.Test.TestFramework
       var result = _countDownEvent.Wait(Timeout);
       Assert.IsTrue(result, $"Timeout: {message}");
     }
+
+    internal void AssertNotSet(string message)
+    {
+      Assert.IsFalse(_countDownEvent.IsSet, message);
+    }
   }
 }

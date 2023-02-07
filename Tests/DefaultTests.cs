@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using NetMessage.Base;
 using NetMessage.Integration.Test.TestFramework;
 
 namespace NetMessage.Integration.Test
