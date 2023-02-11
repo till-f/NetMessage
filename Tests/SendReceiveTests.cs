@@ -138,6 +138,48 @@ namespace NetMessage.Integration.Test
     }
 
     [TestMethod]
+    public void RemoveClientMessageHandler()
+    {
+      // Test 1: successful request
+      _clients[0].AddMessageHandler<TestMessage>(OnMessageReceived);
+
+      _receivedMessageWaitToken[0] = new WaitToken(1);
+      var sendTask = _sessions[0].SendMessageAsync(new TestMessage { MessageText = TestMessageText, MessageCount = 0 });
+      sendTask.WaitAndAssert("Test message could not be sent");
+      _receivedMessageWaitToken[0].WaitAndAssert("Message was not received by client");
+
+      // Test 2: unsuccessful send - client is not listening
+      _clients[0].RemoveMessageHandler<TestMessage>(OnMessageReceived);
+
+      _receivedMessageWaitToken[0] = new WaitToken(1);
+      sendTask = _sessions[0].SendMessageAsync(new TestMessage { MessageText = TestMessageText, MessageCount = 1 });
+      sendTask.WaitAndAssert("Test message could not be sent");
+      Thread.Sleep(1000);
+      _receivedMessageWaitToken[0].AssertNotSet("Message was received by client even though handler was removed");
+    }
+
+    [TestMethod]
+    public void RemoveServerMessageHandler()
+    {
+      // Test 1: successful request
+      _server!.AddMessageHandler<TestMessage>(OnMessageReceived);
+
+      _receivedMessageWaitToken[0] = new WaitToken(1);
+      var sendTask = _clients[0].SendMessageAsync(new TestMessage { MessageText = TestMessageText, MessageCount = 0 });
+      sendTask.WaitAndAssert("Test message could not be sent");
+      _receivedMessageWaitToken[0].WaitAndAssert("Message was not received by session");
+
+      // Test 2: unsuccessful send - client is not listening
+      _server.RemoveMessageHandler<TestMessage>(OnMessageReceived);
+
+      _receivedMessageWaitToken[0] = new WaitToken(1);
+      sendTask = _clients[0].SendMessageAsync(new TestMessage { MessageText = TestMessageText, MessageCount = 1 });
+      sendTask.WaitAndAssert("Test message could not be sent");
+      Thread.Sleep(1000);
+      _receivedMessageWaitToken[0].AssertNotSet("Message was received by server even though handler was removed");
+    }
+
+    [TestMethod]
     public void BurstRequestsToServer()
     {
       _server!.AddRequestHandler<TestRequest, TestResponse>(OnRequestReceived);
