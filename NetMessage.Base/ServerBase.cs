@@ -68,7 +68,7 @@ namespace NetMessage.Base
     /// It allows verification of the remote endpoint (e.g. IP Address) before a session is created. 
     /// The connection is rejected when the verifier returns false.
     /// </summary>
-    public Func<Socket, bool> RemoteSocketVerifier { get; set; }
+    public Func<Socket, bool>? RemoteSocketVerifier { get; set; }
 
     /// <summary>
     /// Called to create a protocol buffer that is used exclusively for one session.
