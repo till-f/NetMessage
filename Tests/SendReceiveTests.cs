@@ -8,17 +8,15 @@ using NetMessage.Integration.Test.TestFramework;
 namespace NetMessage.Integration.Test
 {
   /// <summary>
-  /// Test class for integration tests of <see cref="NetMessageClient"/> and <see cref="NetMessageServer"/> with a
-  /// "default" server and clients.
+  /// Test class for send/receive tests with default server and clients.
   /// 
   /// For all tests, it keeps track of received packets and provides a <see cref="WaitToken"/> so that tests can wait for
   /// received packets.
   ///
-  /// The test initialize method will setup the WaitTokens and received packet counts and connects all clients to the server.
-  /// Note that additional setup is performed by the base class.
+  /// The test initialize method will setup the WaitTokens and received packet counts, starts the server and connects all clients.
   /// </summary>
   [TestClass]
-  public class DefaultTests : TestBase
+  public class SendReceiveTests : TestBase
   {
     // the number of messages that should be sent for the "burst" tests
     private const int MessageCount = 1000;
@@ -45,35 +43,6 @@ namespace NetMessage.Integration.Test
 
         ConnectClient(i);
       }
-    }
-
-    [TestMethod]
-    public void ConnectAndDisconnect()
-    {
-      Assert.IsTrue(_clients[0].IsConnected);
-      Assert.IsTrue(_clients[1].IsConnected);
-
-      _sessionClosedWt = new WaitToken(1);
-      _clients[0].Disconnect();
-      Assert.IsFalse(_clients[0].IsConnected);
-      Assert.IsTrue(_clients[1].IsConnected);
-      _sessionClosedWt.WaitAndAssert("Session was not closed after disconnection of client 0");
-      Assert.AreEqual(_sessions[0], _lastClosedSession);
-
-      _sessionClosedWt = new WaitToken(1);
-      _clients[1].Disconnect();
-      Assert.IsFalse(_clients[0].IsConnected);
-      Assert.IsFalse(_clients[1].IsConnected);
-      _sessionClosedWt.WaitAndAssert("Session was not closed after disconnection of client 1");
-      Assert.AreEqual(_sessions[1], _lastClosedSession);
-    }
-
-    [TestMethod]
-    public void ConnectOfConnectedClient()
-    {
-      var task = _clients[0].ConnectAsync(ServerHost, ServerPort);
-      task.WaitAndAssert("Connect task did not succeed");
-      Assert.IsFalse(task.Result, "Connecting of already connected client did not return false");
     }
 
     [TestMethod]

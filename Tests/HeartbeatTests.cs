@@ -6,6 +6,11 @@ using System.Threading;
 
 namespace NetMessage.Integration.Test
 {
+  /// <summary>
+  /// Test class for heartbeat specific behavior (connection loss exception when heartbeat is not received).
+  /// 
+  /// The test initialized method will not start the server or connect clients.
+  /// </summary>
   [TestClass]
   public class HeartbeatTests : TestBase
   {
