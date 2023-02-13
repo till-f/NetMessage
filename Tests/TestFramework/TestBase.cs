@@ -56,6 +56,8 @@ namespace NetMessage.Integration.Test.TestFramework
     [TestInitialize]
     public void TestBaseInitialize()
     {
+      _ignoreServerErrors = false;
+
       _server = new NetMessageServer(ServerPort);
       _server.ResponseTimeout = TimeSpan.FromMilliseconds(ResponseTimeoutMs);
       _server.FailOnFaultedReceiveTask = true;

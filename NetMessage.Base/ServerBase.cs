@@ -64,6 +64,13 @@ namespace NetMessage.Base
     public virtual bool FailOnFaultedReceiveTask { get; set; }
 
     /// <summary>
+    /// This method is called when a connection request was received and the remote socket was opened.
+    /// It allows verification of the remote endpoint (e.g. IP Address) before a session is created. 
+    /// The connection is rejected when the verifier returns false.
+    /// </summary>
+    public Func<Socket, bool>? RemoteSocketVerifier { get; set; }
+
+    /// <summary>
     /// Called to create a protocol buffer that is used exclusively for one session.
     /// The returned instance must not be used for other sessions.
     /// </summary>
@@ -195,15 +202,15 @@ namespace NetMessage.Base
 
             var remoteSocket = acceptTask.Result;
 
+            if ((RemoteSocketVerifier != null && !RemoteSocketVerifier.Invoke(remoteSocket)) || _cancellationTokenSource.IsCancellationRequested)
+            {
+              remoteSocket.Close();
+              remoteSocket.Dispose();
+              return;
+            }
+
             lock (_sessions)
             {
-              if (_cancellationTokenSource.IsCancellationRequested)
-              {
-                remoteSocket.Close();
-                remoteSocket.Dispose();
-                return;
-              }
-
               session = new TSession();
               InitSession(session);
               session.InitAndStart((TServer)this, remoteSocket, CreateProtocolBuffer());

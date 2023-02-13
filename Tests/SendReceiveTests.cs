@@ -8,17 +8,15 @@ using NetMessage.Integration.Test.TestFramework;
 namespace NetMessage.Integration.Test
 {
   /// <summary>
-  /// Test class for integration tests of <see cref="NetMessageClient"/> and <see cref="NetMessageServer"/> with a
-  /// "default" server and clients.
+  /// Test class for send/receive tests with default server and clients.
   /// 
   /// For all tests, it keeps track of received packets and provides a <see cref="WaitToken"/> so that tests can wait for
   /// received packets.
   ///
-  /// The test initialize method will setup the WaitTokens and received packet counts and connects all clients to the server.
-  /// Note that additional setup is performed by the base class.
+  /// The test initialize method will setup the WaitTokens and received packet counts, starts the server and connects all clients.
   /// </summary>
   [TestClass]
-  public class DefaultTests : TestBase
+  public class SendReceiveTests : TestBase
   {
     // the number of messages that should be sent for the "burst" tests
     private const int MessageCount = 1000;
@@ -45,35 +43,6 @@ namespace NetMessage.Integration.Test
 
         ConnectClient(i);
       }
-    }
-
-    [TestMethod]
-    public void ConnectAndDisconnect()
-    {
-      Assert.IsTrue(_clients[0].IsConnected);
-      Assert.IsTrue(_clients[1].IsConnected);
-
-      _sessionClosedWt = new WaitToken(1);
-      _clients[0].Disconnect();
-      Assert.IsFalse(_clients[0].IsConnected);
-      Assert.IsTrue(_clients[1].IsConnected);
-      _sessionClosedWt.WaitAndAssert("Session was not closed after disconnection of client 0");
-      Assert.AreEqual(_sessions[0], _lastClosedSession);
-
-      _sessionClosedWt = new WaitToken(1);
-      _clients[1].Disconnect();
-      Assert.IsFalse(_clients[0].IsConnected);
-      Assert.IsFalse(_clients[1].IsConnected);
-      _sessionClosedWt.WaitAndAssert("Session was not closed after disconnection of client 1");
-      Assert.AreEqual(_sessions[1], _lastClosedSession);
-    }
-
-    [TestMethod]
-    public void ConnectOfConnectedClient()
-    {
-      var task = _clients[0].ConnectAsync(ServerHost, ServerPort);
-      task.WaitAndAssert("Connect task did not succeed");
-      Assert.IsFalse(task.Result, "Connecting of already connected client did not return false");
     }
 
     [TestMethod]
@@ -166,6 +135,48 @@ namespace NetMessage.Integration.Test
 
       _receivedMessageWaitToken[0].WaitAndAssert("Not all messages from session 0 were received");
       _receivedMessageWaitToken[1].WaitAndAssert("Not all messages from session 1 were received");
+    }
+
+    [TestMethod]
+    public void RemoveClientMessageHandler()
+    {
+      // Test 1: successful request
+      _clients[0].AddMessageHandler<TestMessage>(OnMessageReceived);
+
+      _receivedMessageWaitToken[0] = new WaitToken(1);
+      var sendTask = _sessions[0].SendMessageAsync(new TestMessage { MessageText = TestMessageText, MessageCount = 0 });
+      sendTask.WaitAndAssert("Test message could not be sent");
+      _receivedMessageWaitToken[0].WaitAndAssert("Message was not received by client");
+
+      // Test 2: unsuccessful send - client is not listening
+      _clients[0].RemoveMessageHandler<TestMessage>(OnMessageReceived);
+
+      _receivedMessageWaitToken[0] = new WaitToken(1);
+      sendTask = _sessions[0].SendMessageAsync(new TestMessage { MessageText = TestMessageText, MessageCount = 1 });
+      sendTask.WaitAndAssert("Test message could not be sent");
+      Thread.Sleep(1000);
+      _receivedMessageWaitToken[0].AssertNotSet("Message was received by client even though handler was removed");
+    }
+
+    [TestMethod]
+    public void RemoveServerMessageHandler()
+    {
+      // Test 1: successful request
+      _server!.AddMessageHandler<TestMessage>(OnMessageReceived);
+
+      _receivedMessageWaitToken[0] = new WaitToken(1);
+      var sendTask = _clients[0].SendMessageAsync(new TestMessage { MessageText = TestMessageText, MessageCount = 0 });
+      sendTask.WaitAndAssert("Test message could not be sent");
+      _receivedMessageWaitToken[0].WaitAndAssert("Message was not received by session");
+
+      // Test 2: unsuccessful send - client is not listening
+      _server.RemoveMessageHandler<TestMessage>(OnMessageReceived);
+
+      _receivedMessageWaitToken[0] = new WaitToken(1);
+      sendTask = _clients[0].SendMessageAsync(new TestMessage { MessageText = TestMessageText, MessageCount = 1 });
+      sendTask.WaitAndAssert("Test message could not be sent");
+      Thread.Sleep(1000);
+      _receivedMessageWaitToken[0].AssertNotSet("Message was received by server even though handler was removed");
     }
 
     [TestMethod]
