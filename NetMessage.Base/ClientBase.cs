@@ -17,7 +17,7 @@ namespace NetMessage.Base
     private TProtocol? _protocolBuffer;
 
     public event Action<TClient>? Connected;
-    public event Action<TClient>? Disconnected;
+    public event Action<TClient, SessionClosedArgs>? Disconnected;
     public event Action<TClient, string, Exception?>? OnError;
     public event Action<TClient, Message<TData>>? MessageReceived;
     public event Action<TClient, TRequest>? RequestReceived;
@@ -126,12 +126,12 @@ namespace NetMessage.Base
       RequestReceived?.Invoke((TClient)this, request);
     }
 
-    protected override void NotifyClosed()
+    protected override void NotifyClosed(SessionClosedArgs args)
     {
       _heartbeatTimer.Stop();
       _remoteSocket = null;
       _protocolBuffer = null;
-      Disconnected?.Invoke((TClient)this);
+      Disconnected?.Invoke((TClient)this, args);
     }
 
     protected override void NotifyError(string errorMessage, Exception? exception)

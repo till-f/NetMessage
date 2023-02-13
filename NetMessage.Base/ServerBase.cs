@@ -22,7 +22,7 @@ namespace NetMessage.Base
     private CancellationTokenSource? _cancellationTokenSource;
 
     public event Action<TSession>? SessionOpened;
-    public event Action<TSession>? SessionClosed;
+    public event Action<TSession, SessionClosedArgs>? SessionClosed;
     public event Action<TServer, TSession?, string, Exception?>? OnError;
     public event Action<TSession, Message<TData>>? MessageReceived;
     public event Action<TSession, TRequest>? RequestReceived;
@@ -149,7 +149,7 @@ namespace NetMessage.Base
       OnError?.Invoke((TServer)this, session, message, exception);
     }
 
-    internal void NotifySessionClosed(TSession session)
+    internal void NotifySessionClosed(TSession session, SessionClosedArgs args)
     {
       lock (_sessions)
       {
@@ -158,7 +158,7 @@ namespace NetMessage.Base
           _sessions.Remove(session.Guid);
         }
       }
-      SessionClosed?.Invoke(session);
+      SessionClosed?.Invoke(session, args);
     }
 
     internal void NotifyMessagesReceived(TSession session, Message<TData> message)

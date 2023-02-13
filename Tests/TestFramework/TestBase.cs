@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NetMessage.Base;
 using System;
 
 namespace NetMessage.Integration.Test.TestFramework
@@ -151,7 +152,7 @@ namespace NetMessage.Integration.Test.TestFramework
       _sessionOpenedWt?.Signal();
     }
 
-    private void OnSessionClosed(NetMessageSession session)
+    private void OnSessionClosed(NetMessageSession session, SessionClosedArgs args)
     {
       _lastClosedSession = session;
       _sessionClosedWt?.Signal();

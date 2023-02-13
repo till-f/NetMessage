@@ -52,7 +52,7 @@ namespace NetMessage.Base
     /// <summary>
     /// Called when the connection was closed.
     /// </summary>
-    protected abstract void NotifyClosed();
+    protected abstract void NotifyClosed(SessionClosedArgs args);
 
     /// <summary>
     /// Called when an error occured.
@@ -120,7 +120,7 @@ namespace NetMessage.Base
       RemoteSocket?.Dispose();
 
       _disconnectionFinishedEvent.Set();
-      NotifyClosed();
+      NotifyClosed(new SessionClosedArgs());
     }
 
     /// <summary>

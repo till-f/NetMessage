@@ -1,4 +1,5 @@
 ﻿using System;
+using NetMessage.Base;
 using NetMessage.Base.Packets;
 
 namespace NetMessage.Examples.SimpleString.Server
@@ -70,7 +71,7 @@ namespace NetMessage.Examples.SimpleString.Server
       request.SendResponseAsync("Verry sunny!");
     }
 
-    private static void OnSessionClosed(SimpleStringSession session)
+    private static void OnSessionClosed(SimpleStringSession session, SessionClosedArgs args)
     {
       Console.WriteLine($"SESSION CLOSED: {session.Guid} (Port {session.RemoteEndPoint?.Port})");
       _openSession = null;

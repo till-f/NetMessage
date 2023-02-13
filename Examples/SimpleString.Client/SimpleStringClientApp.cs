@@ -1,4 +1,5 @@
 ﻿using System;
+using NetMessage.Base;
 using NetMessage.Base.Packets;
 
 namespace NetMessage.Examples.SimpleString.Client
@@ -81,7 +82,7 @@ namespace NetMessage.Examples.SimpleString.Client
       request.SendResponseAsync("Yes, you are a nice server.");
     }
 
-    private static void OnDisconnected(SimpleStringClient client)
+    private static void OnDisconnected(SimpleStringClient client, SessionClosedArgs args)
     {
       Console.WriteLine("DISCONNECTED");
     }
