@@ -61,11 +61,11 @@ namespace NetMessage.Base
       Server!.NotifyRequestReceived((TSession)this, request);
     }
 
-    protected override void NotifyClosed()
+    protected override void NotifyClosed(SessionClosedArgs args)
     {
       _remoteSocket = null;
       _protocolBuffer = null;
-      Server!.NotifySessionClosed((TSession)this);
+      Server!.NotifySessionClosed((TSession)this, args);
     }
 
     protected override void NotifyError(string errorMessage, Exception? exception)

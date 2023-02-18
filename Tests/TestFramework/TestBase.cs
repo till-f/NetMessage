@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NetMessage.Base;
 using System;
 
 namespace NetMessage.Integration.Test.TestFramework
@@ -43,6 +44,11 @@ namespace NetMessage.Integration.Test.TestFramework
     // always contains the last opened/closed session
     protected NetMessageSession? _lastOpenedSession;
     protected NetMessageSession? _lastClosedSession;
+    protected SessionClosedArgs? _lastSessionClosedArgs;
+
+    // always contains the last disconnected client
+    protected NetMessageClient? _lastDisconnectedClient;
+    protected SessionClosedArgs? _lastClientDisconnectedArgs;
 
     // can be used wait for a session being opened / closed, but a new wait token must be constructed by the test
     protected WaitToken? _sessionOpenedWt;
@@ -57,6 +63,11 @@ namespace NetMessage.Integration.Test.TestFramework
     public void TestBaseInitialize()
     {
       _ignoreServerErrors = false;
+      _lastOpenedSession = null;
+      _lastClosedSession = null;
+      _lastDisconnectedClient = null;
+      _lastClientDisconnectedArgs = null;
+      _lastSessionClosedArgs = null;
 
       _server = new NetMessageServer(ServerPort);
       _server.ResponseTimeout = TimeSpan.FromMilliseconds(ResponseTimeoutMs);
@@ -71,6 +82,7 @@ namespace NetMessage.Integration.Test.TestFramework
         _clients[i].ResponseTimeout = TimeSpan.FromMilliseconds(ResponseTimeoutMs);
         _clients[i].FailOnFaultedReceiveTask = true;
         _clients[i].OnError += OnError;
+        _clients[i].Disconnected += OnDisconnected;
       }
     }
 
@@ -151,10 +163,17 @@ namespace NetMessage.Integration.Test.TestFramework
       _sessionOpenedWt?.Signal();
     }
 
-    private void OnSessionClosed(NetMessageSession session)
+    protected virtual void OnSessionClosed(NetMessageSession session, SessionClosedArgs args)
     {
       _lastClosedSession = session;
+      _lastSessionClosedArgs = args;
       _sessionClosedWt?.Signal();
+    }
+
+    protected virtual void OnDisconnected(NetMessageClient client, SessionClosedArgs args)
+    {
+      _lastDisconnectedClient = client;
+      _lastClientDisconnectedArgs = args;
     }
   }
 }

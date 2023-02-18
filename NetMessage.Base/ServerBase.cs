@@ -22,7 +22,7 @@ namespace NetMessage.Base
     private CancellationTokenSource? _cancellationTokenSource;
 
     public event Action<TSession>? SessionOpened;
-    public event Action<TSession>? SessionClosed;
+    public event Action<TSession, SessionClosedArgs>? SessionClosed;
     public event Action<TServer, TSession?, string, Exception?>? OnError;
     public event Action<TSession, Message<TData>>? MessageReceived;
     public event Action<TSession, TRequest>? RequestReceived;
@@ -149,7 +149,7 @@ namespace NetMessage.Base
       OnError?.Invoke((TServer)this, session, message, exception);
     }
 
-    internal void NotifySessionClosed(TSession session)
+    internal void NotifySessionClosed(TSession session, SessionClosedArgs args)
     {
       lock (_sessions)
       {
@@ -158,7 +158,7 @@ namespace NetMessage.Base
           _sessions.Remove(session.Guid);
         }
       }
-      SessionClosed?.Invoke(session);
+      SessionClosed?.Invoke(session, args);
     }
 
     internal void NotifyMessagesReceived(TSession session, Message<TData> message)
@@ -221,24 +221,25 @@ namespace NetMessage.Base
           }
           catch (Exception ex)
           {
-            if (session != null)
-            {
-              session.Close();
-            }
-
-            // CancellationToken was triggered. This is NOT an error (do not notify about it)
+            // CancellationToken was triggered. This is NOT an error (do not notify about it).
+            // All opened sessions will be shut down gracefully. When this exception is thrown, no accepted session is pending (session is null)
             if (ex is OperationCanceledException)
             {
               return;
             }
 
+            if (session != null)
+            {
+              session.Close(new SessionClosedArgs(ECloseReason.AcceptError));
+            }
+
             if (ex.InnerException is SocketException se)
             {
-              OnError?.Invoke((TServer)this, null, $"Socket Error {se.SocketErrorCode}", se);
+              OnError?.Invoke((TServer)this, null, $"Unexpected SocketException (ErrorCode {se.SocketErrorCode}) in listening Socket", se);
               return;
             }
 
-            OnError?.Invoke((TServer)this, null, $"Unexpected {ex.GetType().Name}", ex);
+            OnError?.Invoke((TServer)this, null, $"Unexpected {ex.GetType().Name} in listening Socket", ex);
           }
         }
       });

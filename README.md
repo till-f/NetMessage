@@ -32,12 +32,17 @@ public class WeatherResponse
 } 
 ```
 
-*Instances of these classes are (de)serialized by the selected `IDataSerializer`. By default, the `XmlSerializer` from
+This models the application layer of your protocol. Note that in this example, `WeatherRequest` is tied to the
+response type `WeatherResponse`. This contract will be enforced by the compiler. When an endpoint receives a
+`WeatherRequest` it can only reply with an instance of `WeatherResponse`. Besides request and response packets,
+endpoints can also send simple messages. See [Working Principle](#working-principle) for more details.
+
+*Remark: All instances are (de)serialized by the selected `IDataSerializer`. By default, the `XmlSerializer` from
 .NET is used.*
 
 ### 3. Initialize and start server
-Create the server instance with the port number for listening and add handlers for events, messages and requests.
-Then, start the server:
+Create a server instance, which will listens on the specified port, and add handlers for relevant events, messages
+and requests. Then, start the server:
 
 ```cs
 var server = new NetMessageServer(1234);
@@ -65,7 +70,7 @@ private static void WeatherRequestHandler(NetMessageSession session,
 ```
 
 ### 4. Initialize client and connect to server
-Create the client instance and add handlers for events, messages and requests.
+Create the client instance and add handlers for relevant events, messages and requests.
 Then, connect to the server using its host name and port number:
 
 ```cs
@@ -83,8 +88,7 @@ client.ConnectAsync("127.0.0.1", 1234);
 ```
 
 ### 5. Start communication
-When the connection was established successfully, you are ready to send messages and requests and to retrieve the
-corresponding response:
+When the connection has been established, you are ready to send messages or requests:
 
 ```cs
 client.SendMessageAsync("Hello World!");
@@ -100,6 +104,30 @@ server app and vice versa. Or just inspect the relevant files from here:
 * [Messages](Examples/TypeSafe/Messages.cs)
 * [ClientApp](Examples/TypeSafe.Client/NetMessageClientApp.cs)
 * [ServerApp](Examples/TypeSafe.Server/NetMessageServerApp.cs)
+
+
+## Closing Connections and Error Handling
+
+To gracefully close a connection, call `Disconnect()` on the client or the corresponding session of the server. Both endpoints
+are notified about the closed connection: on clients, the `Disconnected` event is called, on the server the `SessionClosed` event.
+
+These events are also called in case of any connection errors, for example, when the connection is reset because the other endpoint
+terminated abnormally, or the connection was lost (see [Heartbeats](#heartbeats-and-keepalive) below). To understand the reason
+for a disconnection or closed session, the `SessionClosedArgs` can be checked. Possible reasons are defined by `ECloseReason`
+[here](NetMessage.Base/SessionClosedArgs.cs).
+
+
+## Heartbeats and KeepAlive
+
+By default, clients will send heartbeat signals to the server. If the server does not receive a heartbeat signal for a
+certain time (`ReceiveTimeout`), it will assume that the connection was lost and closes the session with a `ConnectionLost`
+reason. If a client fails to send a heartbeat signal for a certain amount of time (`HeartbeatTimeout`), it will as well
+close the connection with the same reason. The default timing values can be found [here](NetMessage.Base/Defaults.cs) (among others).
+
+If heartbeat signals are sent, the TCP "keep alive" mechanism provided by the operating system is not used. When `HeartbeatInterval`
+is <= 0, the client instructs the OS to send a first keep alive message after a time span of `KeepAliveTime` using `KeepAliveInterval`
+for retries. The number of retries depends on the OS settings (it is a fixed value of 10 for recent versions of Microsoft Windows).
+The same applies for the server, if `ReceiveTimeout` is <= 0.
 
 
 ## Working Principle
@@ -154,3 +182,11 @@ implementation for XML in [XmlDataSerializer.cs](NetMessage/XmlDataSerializer.cs
 
 ## Tests
 There is small but strong collection of integration tests, see [here](https://github.com/till-f/NetMessage/tree/main/Tests).
+
+
+## Roadmap
+
+* Auto reconnect (clients can automatically reconnects to the server after a connection loss, if desired)
+* TLS encryption
+* Performance measurements
+* More test cases

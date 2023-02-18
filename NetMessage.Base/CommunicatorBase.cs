@@ -52,7 +52,7 @@ namespace NetMessage.Base
     /// <summary>
     /// Called when the connection was closed.
     /// </summary>
-    protected abstract void NotifyClosed();
+    protected abstract void NotifyClosed(SessionClosedArgs args);
 
     /// <summary>
     /// Called when an error occured.
@@ -93,10 +93,9 @@ namespace NetMessage.Base
         _disconnectionFinishedEvent.Reset();
         RemoteSocket?.Shutdown(SocketShutdown.Send);
         var result = _disconnectionFinishedEvent.WaitOne(timeout ?? Defaults.DisconnectTimeout);
-        if (!result)
+        if (!result && !Close(new SessionClosedArgs(ECloseReason.DisconnectTimeout)))
         {
           NotifyError("Timeout while waiting for the acknowledgement of disconnect", null);
-          Close();
         }
       }
     }
@@ -106,21 +105,28 @@ namespace NetMessage.Base
     /// This does not wait for async operations to signal completion.
     /// This does not gracefully close the connection.
     /// Use <see cref="Disconnect"/> to gracefully close the connection.
+    /// Returns true if Close() was already called in context of another
+    /// event/thread.
     /// </summary>
-    public void Close()
+    public bool Close(SessionClosedArgs closeArgs)
     {
-      if (_isClosing)
+      lock(this)
       {
-        return;
+        if (_isClosing)
+        {
+          return true;
+        }
+        _isClosing = true;
       }
-      _isClosing = true;
 
       _cancellationTokenSource.Cancel();
       RemoteSocket?.Close();
       RemoteSocket?.Dispose();
 
       _disconnectionFinishedEvent.Set();
-      NotifyClosed();
+      NotifyClosed(closeArgs);
+
+      return false;
     }
 
     /// <summary>
@@ -251,7 +257,7 @@ namespace NetMessage.Base
               // successful completion of a zero-byte receive operation indicates graceful closure of remote socket
               RemoteSocket.Shutdown(SocketShutdown.Both);
               RemoteSocket.Disconnect(false);
-              Close();
+              Close(new SessionClosedArgs(ECloseReason.GracefulShutdown));
               return;
             }
 
@@ -317,8 +323,8 @@ namespace NetMessage.Base
       // Connection was lost (receive timed out because no heartbeat was received)
       if (ex is ConnectionLostException cle)
       {
+        Close(new SessionClosedArgs(ECloseReason.ConnectionLost));
         NotifyError($"Connection lost: {cle.Message}", cle);
-        Close();
         return true;
       }
 
@@ -326,8 +332,8 @@ namespace NetMessage.Base
       // FUTURE: depending on kind of error, try automatic reconnect / restoring the connection
       if (ex.InnerException is SocketException se)
       {
+        Close(new SessionClosedArgs(ECloseReason.SocketException, se));
         NotifyError($"Unexpected socket error in receive task: {se.SocketErrorCode}", se);
-        Close();
         return true;
       }
 
@@ -338,7 +344,7 @@ namespace NetMessage.Base
 
     public void Dispose()
     {
-      Close();
+      Close(new SessionClosedArgs(ECloseReason.ObjectDisposed));
     }
   }
 }

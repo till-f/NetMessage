@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NetMessage.Base;
+using System;
 using System.Globalization;
 using System.IO;
 
@@ -77,7 +78,7 @@ namespace NetMessage.Examples.TypeSafe.Client
       return client;
     }
 
-    private static void OnDisconnected(NetMessageClient client)
+    private static void OnDisconnected(NetMessageClient client, SessionClosedArgs args)
     {
       Console.WriteLine("DISCONNECTED");
     }

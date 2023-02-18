@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NetMessage.Base;
+using System;
 using System.Globalization;
 using System.IO;
 
@@ -72,7 +73,7 @@ namespace NetMessage.Examples.TypeSafe.Server
       return server;
     }
 
-    private static void OnSessionClosed(NetMessageSession session)
+    private static void OnSessionClosed(NetMessageSession session, SessionClosedArgs args)
     {
       Console.WriteLine($"SESSION CLOSED: {session.Guid} (Port {session.RemoteEndPoint?.Port})");
       _openSession = null;
