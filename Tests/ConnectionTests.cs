@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NetMessage.Base;
 using NetMessage.Integration.Test.TestFramework;
 using System.Threading;
 
@@ -38,6 +39,9 @@ namespace NetMessage.Integration.Test
       Assert.IsTrue(_clients[1].IsConnected);
       _sessionClosedWt.WaitAndAssert("Session was not closed after disconnection of client 0");
       Assert.AreEqual(_sessions[0], _lastClosedSession);
+      Assert.AreEqual(ECloseReason.GracefulShutdown, _lastSessionClosedArgs?.Reason);
+      Assert.AreEqual(_clients[0], _lastDisconnectedClient);
+      Assert.AreEqual(ECloseReason.GracefulShutdown, _lastClientDisconnectedArgs?.Reason);
 
       _sessionClosedWt = new WaitToken(1);
       _clients[1].Disconnect();
@@ -45,6 +49,9 @@ namespace NetMessage.Integration.Test
       Assert.IsFalse(_clients[1].IsConnected);
       _sessionClosedWt.WaitAndAssert("Session was not closed after disconnection of client 1");
       Assert.AreEqual(_sessions[1], _lastClosedSession);
+      Assert.AreEqual(ECloseReason.GracefulShutdown, _lastSessionClosedArgs?.Reason);
+      Assert.AreEqual(_clients[1], _lastDisconnectedClient);
+      Assert.AreEqual(ECloseReason.GracefulShutdown, _lastClientDisconnectedArgs?.Reason);
     }
 
     [TestMethod]

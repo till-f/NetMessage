@@ -221,24 +221,25 @@ namespace NetMessage.Base
           }
           catch (Exception ex)
           {
-            if (session != null)
-            {
-              session.Close();
-            }
-
-            // CancellationToken was triggered. This is NOT an error (do not notify about it)
+            // CancellationToken was triggered. This is NOT an error (do not notify about it).
+            // All opened sessions will be shut down gracefully. When this exception is thrown, no accepted session is pending (session is null)
             if (ex is OperationCanceledException)
             {
               return;
             }
 
+            if (session != null)
+            {
+              session.Close(new SessionClosedArgs(ECloseReason.AcceptError));
+            }
+
             if (ex.InnerException is SocketException se)
             {
-              OnError?.Invoke((TServer)this, null, $"Socket Error {se.SocketErrorCode}", se);
+              OnError?.Invoke((TServer)this, null, $"Unexpected SocketException (ErrorCode {se.SocketErrorCode}) in listening Socket", se);
               return;
             }
 
-            OnError?.Invoke((TServer)this, null, $"Unexpected {ex.GetType().Name}", ex);
+            OnError?.Invoke((TServer)this, null, $"Unexpected {ex.GetType().Name} in listening Socket", ex);
           }
         }
       });

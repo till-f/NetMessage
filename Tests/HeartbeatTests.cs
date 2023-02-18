@@ -14,8 +14,11 @@ namespace NetMessage.Integration.Test
   [TestClass]
   public class HeartbeatTests : TestBase
   {
-    WaitToken[] _connectionLostSessionWaitTokens = new WaitToken[ClientCount];
-    WaitToken[] _connectionLostClientWaitTokens = new WaitToken[ClientCount];
+    WaitToken[] _clientDisconnectedWaitTokens = new WaitToken[ClientCount];
+    WaitToken[] _sessionClosedWaitTokens = new WaitToken[ClientCount];
+
+    WaitToken[] _connectionLostClientErrorWaitTokens = new WaitToken[ClientCount];
+    WaitToken[] _connectionLostSessionErrorWaitTokens = new WaitToken[ClientCount];
 
     [TestInitialize]
     public void TestInitialize()
@@ -31,15 +34,15 @@ namespace NetMessage.Integration.Test
         heartbeatInterval: TimeSpan.FromMilliseconds(100),
         heartbeatTimeout: TimeSpan.FromMilliseconds(100),
         receiveTimeout: TimeSpan.FromMilliseconds(300),
-        true
+        connectClients: true
         );
 
       Thread.Sleep(1000);
 
       for (int clientIndex = 0; clientIndex < ClientCount; clientIndex++)
       {
-        _connectionLostClientWaitTokens[clientIndex].AssertNotSet($"ConnectionLost was triggered on client {clientIndex}");
-        _connectionLostSessionWaitTokens[clientIndex].AssertNotSet($"ConnectionLost was triggered on session {clientIndex}");
+        _connectionLostClientErrorWaitTokens[clientIndex].AssertNotSet($"ConnectionLost Error was triggered on client {clientIndex}");
+        _connectionLostSessionErrorWaitTokens[clientIndex].AssertNotSet($"ConnectionLost Error was triggered on session {clientIndex}");
         Assert.IsTrue(_clients[clientIndex].IsConnected, $"client {clientIndex} is not connected");
         Assert.IsTrue(_sessions[clientIndex].IsConnected, $"session {clientIndex} is not connected");
       }
@@ -53,22 +56,26 @@ namespace NetMessage.Integration.Test
         heartbeatInterval: TimeSpan.FromMilliseconds(200),
         heartbeatTimeout: TimeSpan.FromMilliseconds(300),
         receiveTimeout: TimeSpan.FromMilliseconds(100),
-        true
+        connectClients: true
         );
 
       // session receive timeout should be triggered
       for (int clientIndex = 0; clientIndex < ClientCount; clientIndex++)
       {
-        _connectionLostSessionWaitTokens[clientIndex].WaitAndAssert($"ConnectionLost was not triggered on session {clientIndex}");
+        _connectionLostSessionErrorWaitTokens[clientIndex].WaitAndAssert($"ConnectionLost Error was not triggered on session {clientIndex}");
+        _sessionClosedWaitTokens[clientIndex].WaitAndAssert($"SessionClosed was not triggered on session {clientIndex}");
+        Assert.AreEqual(ECloseReason.ConnectionLost, _lastSessionClosedArgs?.Reason, $"SessionClosed was triggered with unexpected reason");
       }
 
       Thread.Sleep(1000);
 
-      // client does not detect a connection loss because it can send the heartbeat (it just is too slow)
+      // client does not detect a connection loss because it can still send the heartbeat
       // session then closes the connection which is detected by client
       for (int clientIndex = 0; clientIndex < ClientCount; clientIndex++)
       {
-        _connectionLostClientWaitTokens[clientIndex].AssertNotSet($"ConnectionLost was triggered on client {clientIndex}");
+        _connectionLostClientErrorWaitTokens[clientIndex].AssertNotSet($"ConnectionLost Error was triggered on client {clientIndex}");
+        _clientDisconnectedWaitTokens[clientIndex].WaitAndAssert($"Disconnected was not triggered on client {clientIndex}");
+        Assert.AreEqual(ECloseReason.SocketException, _lastClientDisconnectedArgs?.Reason, $"Disconnected was triggered with unexpected reason");
         Assert.IsFalse(_clients[clientIndex].IsConnected, $"client {clientIndex} is still connected");
         Assert.IsFalse(_sessions[clientIndex].IsConnected, $"session {clientIndex} is still connected");
       }
@@ -77,20 +84,20 @@ namespace NetMessage.Integration.Test
     [TestMethod]
     public void HeartbeatDisabledNoReceiveTimeout()
     {
-      // heartbeat is sent too slow 
+      // heartbeat is disabled
       StartAndConnect(
         heartbeatInterval: Timeout.InfiniteTimeSpan,
         heartbeatTimeout: TimeSpan.FromMilliseconds(100),
         receiveTimeout: Timeout.InfiniteTimeSpan,
-        true
+        connectClients: true
         );
 
       Thread.Sleep(1000);
 
       for (int clientIndex = 0; clientIndex < ClientCount; clientIndex++)
       {
-        _connectionLostClientWaitTokens[clientIndex].AssertNotSet($"ConnectionLost was triggered on client {clientIndex}");
-        _connectionLostSessionWaitTokens[clientIndex].AssertNotSet($"ConnectionLost was triggered on session {clientIndex}");
+        _connectionLostClientErrorWaitTokens[clientIndex].AssertNotSet($"ConnectionLost Error was triggered on client {clientIndex}");
+        _connectionLostSessionErrorWaitTokens[clientIndex].AssertNotSet($"ConnectionLost Error was triggered on session {clientIndex}");
         Assert.IsTrue(_clients[clientIndex].IsConnected, $"client {clientIndex} is not connected");
         Assert.IsTrue(_sessions[clientIndex].IsConnected, $"session {clientIndex} is not connected");
       }
@@ -104,15 +111,15 @@ namespace NetMessage.Integration.Test
         heartbeatInterval: TimeSpan.FromMilliseconds(1000),
         heartbeatTimeout: TimeSpan.FromMilliseconds(100),
         receiveTimeout: TimeSpan.FromMilliseconds(100),
-        false
+        connectClients: false
         );
 
       Thread.Sleep(1000);
 
       for (int clientIndex = 0; clientIndex < ClientCount; clientIndex++)
       {
-        _connectionLostClientWaitTokens[clientIndex].AssertNotSet($"ConnectionLost was triggered on client {clientIndex}");
-        _connectionLostSessionWaitTokens[clientIndex].AssertNotSet($"ConnectionLost was triggered on session {clientIndex}");
+        _connectionLostClientErrorWaitTokens[clientIndex].AssertNotSet($"ConnectionLost Error was triggered on client {clientIndex}");
+        _connectionLostSessionErrorWaitTokens[clientIndex].AssertNotSet($"ConnectionLost Error was triggered on session {clientIndex}");
         Assert.IsFalse(_clients[clientIndex].IsConnected, $"client {clientIndex} was connected");
         Assert.IsNull(_sessions[clientIndex], $"a session existed for index {clientIndex}");
       }
@@ -127,8 +134,10 @@ namespace NetMessage.Integration.Test
       {
         _clients[i].HeartbeatInterval = heartbeatInterval;
         _clients[i].HeartbeatTimeout = heartbeatTimeout;
-        _connectionLostClientWaitTokens[i] = new WaitToken(1);
-        _connectionLostSessionWaitTokens[i] = new WaitToken(1);
+        _connectionLostClientErrorWaitTokens[i] = new WaitToken(1);
+        _connectionLostSessionErrorWaitTokens[i] = new WaitToken(1);
+        _clientDisconnectedWaitTokens[i] = new WaitToken(1);
+        _sessionClosedWaitTokens[i] = new WaitToken(1);
         if (connectClients)
         {
           ConnectClient(i);
@@ -145,12 +154,26 @@ namespace NetMessage.Integration.Test
 
       if (communicator is NetMessageClient)
       {
-        _connectionLostClientWaitTokens[clientIndex].Signal();
+        _connectionLostClientErrorWaitTokens[clientIndex].Signal();
       }
       else if (communicator is NetMessageSession)
       {
-        _connectionLostSessionWaitTokens[clientIndex].Signal();
+        _connectionLostSessionErrorWaitTokens[clientIndex].Signal();
       }
+    }
+
+    protected override void OnDisconnected(NetMessageClient client, SessionClosedArgs args)
+    {
+      base.OnDisconnected(client, args);
+
+      _clientDisconnectedWaitTokens[Array.IndexOf(_clients, client)].Signal();
+    }
+
+    protected override void OnSessionClosed(NetMessageSession session, SessionClosedArgs args)
+    {
+      base.OnSessionClosed(session, args);
+
+      _sessionClosedWaitTokens[Array.IndexOf(_sessions, session)].Signal();
     }
   }
 }
