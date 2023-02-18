@@ -106,19 +106,23 @@ server app and vice versa. Or just inspect the relevant files from here:
 * [ServerApp](Examples/TypeSafe.Server/NetMessageServerApp.cs)
 
 
-## Closing Connections and Error Handling
+## Closing Connections
 
-To gracefully close a connection, call `Disconnect()` on the client or the corresponding session of the server. Both endpoints
-are notified about the closed connection: on clients, the `Disconnected` event is called, on the server the `SessionClosed` event.
+To gracefully shut down a connection, call `Disconnect()` on the client or the corresponding session of the server. Both endpoints
+are notified about the closed connection: on clients, the `Disconnected` event is triggered, on the server the `SessionClosed` event.
 
-These events are also called in case of any connection errors, for example, when the connection is reset because the other endpoint
-terminated abnormally, or the connection was lost (see [Heartbeats](#heartbeats-and-keepalive) below). To understand the reason
-for a disconnection or closed session, the `SessionClosedArgs` can be checked. Possible reasons are defined by `ECloseReason`
+These events are also triggered in case of connection errors, for example, when the connection is reset by the operating system,
+or when the connection was lost (see [heartbeats](#heartbeats-and-keepalive) below). To understand the reason
+for disconnection, details are provided in the `SessionClosedArgs`. Possible reasons are defined by `ECloseReason`, see
 [here](NetMessage.Base/SessionClosedArgs.cs).
 
 
-## Heartbeats and KeepAlive
+## Error Handling
+Every error or exception in the communication layer triggers the `OnError` event of the server or client. If the connection
+was closed due to the error, the respective `Disconnected` or `SessionClosed` event was triggered first.
 
+
+## Heartbeats and KeepAlive
 By default, clients will send heartbeat signals to the server. If the server does not receive a heartbeat signal for a
 certain time (`ReceiveTimeout`), it will assume that the connection was lost and closes the session with a `ConnectionLost`
 reason. If a client fails to send a heartbeat signal for a certain amount of time (`HeartbeatTimeout`), it will as well
