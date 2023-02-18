@@ -18,27 +18,27 @@ namespace NetMessage.Base
   public enum ECloseReason
   {
     /// <summary>
-    /// Connection was closed because of successful disconnect handshake.
+    /// Connection was closed after disconnect handshake was performed. Disconnect was either initiated by this or the remote endpoint.
     /// </summary>
     GracefulShutdown,
 
     /// <summary>
-    /// Connection was closed because disconnect was initiated but not acknowledged in time by remote endpoint.
+    /// Connection was closed because disconnect handshake was not acknowledged in time by the remote endpoint.
     /// </summary>
     DisconnectTimeout,
 
     /// <summary>
-    /// Connection was closed because heartbeat timeout exceeded.
+    /// Connection was closed because heartbeat timeout exceeded (failed to send heartbeat message, or it was not received in time).
     /// </summary>
     ConnectionLost,
 
     /// <summary>
-    /// Connection was closed because of a SocketException. For details, see <see cref="SocketException.SocketErrorCode"/>.
+    /// Connection was closed because of a SocketException. Further details are provided by <see cref="SessionClosedArgs.SocketException"/>, see <see cref="SocketException.SocketErrorCode"/>.
     /// </summary>
     SocketException,
 
     /// <summary>
-    /// Connection was closed because the Dispose() method was called on the communicator object.
+    /// Connection was closed because Dispose() was called on the communicator object.
     /// </summary>
     ObjectDisposed,
 

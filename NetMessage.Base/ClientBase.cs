@@ -164,7 +164,7 @@ namespace NetMessage.Base
         }
 
         var task = SendRawDataAsync(_protocolBuffer!.HeartbeatPacket);
-        int heartbeatTimeoutInms = ReceiveTimeout.IsInfinite() ? -1 : (int)ReceiveTimeout.TotalMilliseconds;
+        int heartbeatTimeoutInms = HeartbeatTimeout.IsInfinite() ? -1 : (int)HeartbeatTimeout.TotalMilliseconds;
         var completedInTime = task.Wait(heartbeatTimeoutInms, CancellationToken);
 
         if (!completedInTime)
