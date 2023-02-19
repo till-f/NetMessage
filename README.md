@@ -133,10 +133,12 @@ By default, heartbeat signals are send by both endpoints in certain intervals (`
 receive a packet or heartbeat signal for a certain time (`ReceiveTimeout`), it will assume that the connection was lost and closes
 the session with a `ConnectionLost` reason. The default timing values can be found [here](NetMessage.Base/Defaults.cs) (among others).
 
-If heartbeat signals are sent, the TCP "keep alive" mechanism provided by the operating system is turned off. If heartbeats are
-disabled, that is when `HeartbeatInterval` is <= 0, the client instructs the OS to send a first keep alive message after a time span
-of `KeepAliveTime` using `KeepAliveInterval` for retries. The number of retries depends on the OS settings (it is a fixed value of
-10 for recent versions of Microsoft Windows).
+If heartbeats are disabled, the TCP "keep alive" mechanism provided by the operating system is used. To disable heartbeats, set
+`HeartbeatInterval` to a value smaller or equal to zero. In that case, the OS should send the first keep alive message when no data
+was transmitted for `KeepAliveTime` and should then retry after `KeepAliveInterval` if no acknowledgement was received. The number of
+retries depends on the OS settings (it should be a fixed value of 10 for recent versions of Microsoft Windows). However, it seems that
+the keep alive timing values are not properly considered in all cases and it may take *much* longer before a connection loss is detected.
+If the detection of a connection loss is important, it is highly recommended to use heartbeats instead of keep alive.
 
 
 ## Working Principle

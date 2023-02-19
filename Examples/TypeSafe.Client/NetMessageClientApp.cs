@@ -7,7 +7,7 @@ namespace NetMessage.Examples.TypeSafe.Client
 {
   class NetMessageClientApp
   {
-    public const string HostName = "192.168.2.20";
+    public const string HostName = "127.0.0.1";
     public const ushort Port = 2012;
 
     public static StreamWriter _writer = File.AppendText("messages.log");

@@ -24,7 +24,7 @@ namespace NetMessage.Base
     /// <summary>
     /// Specifies the interval between when heartbeat packets are sent.
     /// A value smaller or equal zero disables the heartbeat. In that case, the TCP's native keep alive mechanism is used.
-    /// Note that a connection loss might not be detected quickly then.
+    /// If heartbeats are disabled, consider to set the ReceiveTimeout of the remote endpoint to zero.
     /// </summary>
     public TimeSpan HeartbeatInterval { get; set; } = Defaults.HeartbeatInterval;
 
