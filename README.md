@@ -174,20 +174,18 @@ the original user request object of type `TTData`:
     it is not possible to add an explicit handler.
 
 
-## Extension
-If you want to implement a custom protocol, but still taking advantage of the event based notifications for messages, requests
-and responses provided by *NetMessage*, you might want to use the *NetMessage.Base* [NuGet package](https://www.nuget.org/packages/NetMessage.Base "NetMessage.Base on NuGet.org").
-The basic working principle described above is still valid, but the higher layer for transparent (de)serialization
-of C# objects will not be available.
-
-Using a custom protocol is as simple as implementing the `IProtocol` interface ([IProtocol.cs](NetMessage.Base/IProtocol.cs))
-and adding the corresponding concrete classes for the server, client and session. See the *SimpleString* Example in the
-[Examples](https://github.com/till-f/NetMessage/tree/main/Examples) folder for details.
-
+## Customization
 If you just want to change the way how C# objects are (de)serialized, e.g. if you want to use Json instead of XML, all you have to do
 is implementing the `IDataSerializer` interface ([IDataSerializer.cs](NetMessage/IDataSerializer.cs)) and pass the
 corresponding instance to the `NetMessageServer` and `NetMessageClient` constructor respectively. Take a look at the existing
 implementation for XML in [XmlDataSerializer.cs](NetMessage/XmlDataSerializer.cs) if you need an example.
+
+If you really want to support a custom low-level protocol, you can still take advantage of the event based notifications for packets
+but the higher layer for transparent (de)serialization of C# objects is not available. If this is OK, you can use the *NetMessage.Base*
+[NuGet package](https://www.nuget.org/packages/NetMessage.Base "NetMessage.Base on NuGet.org") directly. You only have to implement
+the `IProtocol` interface (see [IProtocol.cs](NetMessage.Base/IProtocol.cs)) and must add the corresponding concrete classes for the
+server, client, session and request objects. See the *SimpleString* Example under [Examples](https://github.com/till-f/NetMessage/tree/main/Examples)
+for details.
 
 
 ## Tests
