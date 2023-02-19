@@ -80,7 +80,7 @@ namespace NetMessage.Examples.TypeSafe.Client
 
     private static void OnDisconnected(NetMessageClient client, SessionClosedArgs args)
     {
-      Console.WriteLine("DISCONNECTED");
+      Console.WriteLine($"DISCONNECTED, Reason: {args.Reason}");
     }
 
     private static void OnConnected(NetMessageClient client)

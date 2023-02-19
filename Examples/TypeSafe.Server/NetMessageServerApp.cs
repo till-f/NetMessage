@@ -75,7 +75,7 @@ namespace NetMessage.Examples.TypeSafe.Server
 
     private static void OnSessionClosed(NetMessageSession session, SessionClosedArgs args)
     {
-      Console.WriteLine($"SESSION CLOSED: {session.Guid} (Port {session.RemoteEndPoint?.Port})");
+      Console.WriteLine($"SESSION CLOSED: {session.Guid} (Port {session.RemoteEndPoint?.Port}), Reason: {args.Reason}");
       _openSession = null;
     }
 
