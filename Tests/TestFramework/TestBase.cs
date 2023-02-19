@@ -166,6 +166,11 @@ namespace NetMessage.Integration.Test.TestFramework
 
     protected virtual void OnSessionClosed(NetMessageSession session, SessionClosedArgs args)
     {
+      if (args.Reason == ECloseReason.SocketException)
+      {
+        Assert.IsNotNull(args.SocketException, "SocketException was null for ECloseReason.SocketException");
+      }
+
       _lastClosedSession = session;
       _lastSessionClosedArgs = args;
       _sessionClosedWt?.Signal();
@@ -173,6 +178,11 @@ namespace NetMessage.Integration.Test.TestFramework
 
     protected virtual void OnDisconnected(NetMessageClient client, SessionClosedArgs args)
     {
+      if (args.Reason == ECloseReason.SocketException)
+      {
+        Assert.IsNotNull(args.SocketException, "SocketException was null for ECloseReason.SocketException");
+      }
+
       _lastDisconnectedClient = client;
       _lastClientDisconnectedArgs = args;
       _clientDisconnectedWt?.Signal();
