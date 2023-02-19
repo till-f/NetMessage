@@ -5,7 +5,7 @@ namespace NetMessage.Base
 {
   public class ConnectionLostException : Exception
   {
-    public ConnectionLostException(string message) : base(message)
+    public ConnectionLostException(int timeout) : base($"No heartbeat was received after {timeout} ms") 
     {
     }
   }

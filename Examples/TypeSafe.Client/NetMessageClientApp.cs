@@ -7,6 +7,7 @@ namespace NetMessage.Examples.TypeSafe.Client
 {
   class NetMessageClientApp
   {
+    public const string HostName = "192.168.2.20";
     public const ushort Port = 2012;
 
     public static StreamWriter _writer = File.AppendText("messages.log");
@@ -32,7 +33,7 @@ namespace NetMessage.Examples.TypeSafe.Client
               break;
             }
             Console.WriteLine("Connecting...");
-            client.ConnectAsync("127.0.0.1", Port);
+            client.ConnectAsync(HostName, Port);
             break;
           case 's':
             if (!client.IsConnected)

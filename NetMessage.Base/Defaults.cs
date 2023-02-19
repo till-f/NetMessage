@@ -15,8 +15,6 @@ namespace NetMessage.Base
 
     public static readonly TimeSpan HeartbeatInterval = TimeSpan.FromSeconds(2);
 
-    public static readonly TimeSpan HeartbeatSendTimeout = TimeSpan.FromSeconds(2);
-
     public static readonly TimeSpan ReceiveTimeout = TimeSpan.FromSeconds(5);
 
     public static readonly TimeSpan KeepAliveTime = TimeSpan.FromMinutes(5);

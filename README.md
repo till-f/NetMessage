@@ -129,15 +129,14 @@ was closed due to the error, the respective `Disconnected` or `SessionClosed` ev
 
 
 ## Heartbeats and Keepalive
-By default, clients will send heartbeat signals to the server. If the server does not receive a heartbeat signal for a
-certain time (`ReceiveTimeout`), it will assume that the connection was lost and closes the session with a `ConnectionLost`
-reason. If a client fails to send a heartbeat signal for a certain amount of time (`HeartbeatSendTimeout`), it will as well
-close the connection with the same reason. The default timing values can be found [here](NetMessage.Base/Defaults.cs) (among others).
+By default, heartbeat signals are send by both endpoints in certain intervals (`HeartbeatInterval`). If one endpoint does not
+receive a packet or heartbeat signal for a certain time (`ReceiveTimeout`), it will assume that the connection was lost and closes
+the session with a `ConnectionLost` reason. The default timing values can be found [here](NetMessage.Base/Defaults.cs) (among others).
 
 If heartbeat signals are sent, the TCP "keep alive" mechanism provided by the operating system is turned off. If heartbeats are
 disabled, that is when `HeartbeatInterval` is <= 0, the client instructs the OS to send a first keep alive message after a time span
 of `KeepAliveTime` using `KeepAliveInterval` for retries. The number of retries depends on the OS settings (it is a fixed value of
-10 for recent versions of Microsoft Windows). The same applies for the server, if `ReceiveTimeout` is <= 0.
+10 for recent versions of Microsoft Windows).
 
 
 ## Working Principle

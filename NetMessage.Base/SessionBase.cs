@@ -24,15 +24,16 @@ namespace NetMessage.Base
       Server = server;
       _remoteSocket = remoteSocket;
       _remoteSocket.LingerState = new LingerOption(true, 0);  // discard queued data when socket is shut down and reset the connection
-      if (server.ReceiveTimeout.IsInfinite())
+      if (server.HeartbeatInterval.IsInfinite())
       {
         _remoteSocket.SetTcpKeepAlive(server.KeepAliveTime, server.KeepAliveInterval);
       }
       else
       {
-        ReceiveTimeout = server.ReceiveTimeout;
         _remoteSocket.SetTcpKeepAlive(TimeSpan.Zero, TimeSpan.Zero);
       }
+      HeartbeatInterval = server.HeartbeatInterval;
+      ReceiveTimeout = server.ReceiveTimeout;
       ResponseTimeout = server.ResponseTimeout;
       FailOnFaultedReceiveTask = server.FailOnFaultedReceiveTask;
 
