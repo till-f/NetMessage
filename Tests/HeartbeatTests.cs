@@ -32,7 +32,7 @@ namespace NetMessage.Integration.Test
       // happy config: heartbeat is sent quick enough
       StartAndConnect(
         heartbeatInterval: TimeSpan.FromMilliseconds(100),
-        heartbeatTimeout: TimeSpan.FromMilliseconds(100),
+        heartbeatSendTimeout: TimeSpan.FromMilliseconds(100),
         receiveTimeout: TimeSpan.FromMilliseconds(300),
         connectClients: true
         );
@@ -54,7 +54,7 @@ namespace NetMessage.Integration.Test
       // heartbeat is sent too slow 
       StartAndConnect(
         heartbeatInterval: TimeSpan.FromMilliseconds(200),
-        heartbeatTimeout: TimeSpan.FromMilliseconds(300),
+        heartbeatSendTimeout: TimeSpan.FromMilliseconds(300),
         receiveTimeout: TimeSpan.FromMilliseconds(100),
         connectClients: true
         );
@@ -87,7 +87,7 @@ namespace NetMessage.Integration.Test
       // heartbeat is disabled
       StartAndConnect(
         heartbeatInterval: Timeout.InfiniteTimeSpan,
-        heartbeatTimeout: TimeSpan.FromMilliseconds(100),
+        heartbeatSendTimeout: TimeSpan.FromMilliseconds(100),
         receiveTimeout: Timeout.InfiniteTimeSpan,
         connectClients: true
         );
@@ -109,7 +109,7 @@ namespace NetMessage.Integration.Test
       // heartbeat is sent too slow 
       StartAndConnect(
         heartbeatInterval: TimeSpan.FromMilliseconds(1000),
-        heartbeatTimeout: TimeSpan.FromMilliseconds(100),
+        heartbeatSendTimeout: TimeSpan.FromMilliseconds(100),
         receiveTimeout: TimeSpan.FromMilliseconds(100),
         connectClients: false
         );
@@ -125,7 +125,7 @@ namespace NetMessage.Integration.Test
       }
     }
 
-    private void StartAndConnect(TimeSpan heartbeatInterval, TimeSpan heartbeatTimeout, TimeSpan receiveTimeout, bool connectClients)
+    private void StartAndConnect(TimeSpan heartbeatInterval, TimeSpan heartbeatSendTimeout, TimeSpan receiveTimeout, bool connectClients)
     {
       _server!.ReceiveTimeout = receiveTimeout;
       _server.Start();
@@ -133,7 +133,7 @@ namespace NetMessage.Integration.Test
       for (int i = 0; i < ClientCount; i++)
       {
         _clients[i].HeartbeatInterval = heartbeatInterval;
-        _clients[i].HeartbeatTimeout = heartbeatTimeout;
+        _clients[i].HeartbeatSendTimeout = heartbeatSendTimeout;
         _connectionLostClientErrorWaitTokens[i] = new WaitToken(1);
         _connectionLostSessionErrorWaitTokens[i] = new WaitToken(1);
         _clientDisconnectedWaitTokens[i] = new WaitToken(1);

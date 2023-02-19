@@ -50,9 +50,10 @@ namespace NetMessage.Integration.Test.TestFramework
     protected NetMessageClient? _lastDisconnectedClient;
     protected SessionClosedArgs? _lastClientDisconnectedArgs;
 
-    // can be used wait for a session being opened / closed, but a new wait token must be constructed by the test
+    // can be used to wait for a session being opened / closed, but a new wait token must be constructed by the test
     protected WaitToken? _sessionOpenedWt;
     protected WaitToken? _sessionClosedWt;
+    protected WaitToken? _clientDisconnectedWt;
 
     // may be used to avoid failing tests in edge cases (see class comment)
     protected bool _ignoreServerErrors;
@@ -174,6 +175,7 @@ namespace NetMessage.Integration.Test.TestFramework
     {
       _lastDisconnectedClient = client;
       _lastClientDisconnectedArgs = args;
+      _clientDisconnectedWt?.Signal();
     }
   }
 }

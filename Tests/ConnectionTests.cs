@@ -34,20 +34,24 @@ namespace NetMessage.Integration.Test
       Assert.IsTrue(_clients[1].IsConnected);
 
       _sessionClosedWt = new WaitToken(1);
+      _clientDisconnectedWt = new WaitToken(1);
       _clients[0].Disconnect();
       Assert.IsFalse(_clients[0].IsConnected);
       Assert.IsTrue(_clients[1].IsConnected);
       _sessionClosedWt.WaitAndAssert("Session was not closed after disconnection of client 0");
+      _clientDisconnectedWt.WaitAndAssert("Client was not notified after disconnection of client 0");
       Assert.AreEqual(_sessions[0], _lastClosedSession);
       Assert.AreEqual(ECloseReason.GracefulShutdown, _lastSessionClosedArgs?.Reason);
       Assert.AreEqual(_clients[0], _lastDisconnectedClient);
       Assert.AreEqual(ECloseReason.GracefulShutdown, _lastClientDisconnectedArgs?.Reason);
 
       _sessionClosedWt = new WaitToken(1);
+      _clientDisconnectedWt = new WaitToken(1);
       _clients[1].Disconnect();
       Assert.IsFalse(_clients[0].IsConnected);
       Assert.IsFalse(_clients[1].IsConnected);
       _sessionClosedWt.WaitAndAssert("Session was not closed after disconnection of client 1");
+      _clientDisconnectedWt.WaitAndAssert("Client was not notified after disconnection of client 1");
       Assert.AreEqual(_sessions[1], _lastClosedSession);
       Assert.AreEqual(ECloseReason.GracefulShutdown, _lastSessionClosedArgs?.Reason);
       Assert.AreEqual(_clients[1], _lastDisconnectedClient);

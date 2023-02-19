@@ -33,7 +33,7 @@ namespace NetMessage.Base
     /// <summary>
     /// Specifies the time to wait for a heartbeat packet to be sent before assuming a connection loss.
     /// </summary>
-    public TimeSpan HeartbeatTimeout { get; set; } = Defaults.HeartbeatTimeout;
+    public TimeSpan HeartbeatSendTimeout { get; set; } = Defaults.HeartbeatSendTimeout;
 
     /// <summary>
     /// Only applicable if heartbeat is disabled.
@@ -164,12 +164,12 @@ namespace NetMessage.Base
         }
 
         var task = SendRawDataAsync(_protocolBuffer!.HeartbeatPacket);
-        int heartbeatTimeoutInms = HeartbeatTimeout.IsInfinite() ? -1 : (int)HeartbeatTimeout.TotalMilliseconds;
-        var completedInTime = task.Wait(heartbeatTimeoutInms, CancellationToken);
+        int heartbeatSendTimeoutInms = HeartbeatSendTimeout.IsInfinite() ? -1 : (int)HeartbeatSendTimeout.TotalMilliseconds;
+        var completedInTime = task.Wait(heartbeatSendTimeoutInms, CancellationToken);
 
         if (!completedInTime)
         {
-          throw new ConnectionLostException($"Heartbeat could not be sent after {heartbeatTimeoutInms} ms");
+          throw new ConnectionLostException($"Heartbeat could not be sent after {heartbeatSendTimeoutInms} ms");
         }
       }
       catch (Exception ex)
