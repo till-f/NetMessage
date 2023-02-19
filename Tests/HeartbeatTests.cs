@@ -7,7 +7,7 @@ using System.Threading;
 namespace NetMessage.Integration.Test
 {
   /// <summary>
-  /// Test class for heartbeat specific behavior (connection loss exception when heartbeat is not received).
+  /// Test class for heartbeat specific behavior (ConnectionLoss when heartbeat is not received).
   /// 
   /// The test initialized method will not start the server or connect clients.
   /// </summary>
@@ -31,8 +31,8 @@ namespace NetMessage.Integration.Test
     {
       // happy config: heartbeat is sent quick enough
       StartAndConnect(
-        heartbeatInterval: TimeSpan.FromMilliseconds(100),
-        heartbeatTimeout: TimeSpan.FromMilliseconds(100),
+        heartbeatIntervalServer: TimeSpan.FromMilliseconds(100),
+        heartbeatIntervalClient: TimeSpan.FromMilliseconds(100),
         receiveTimeout: TimeSpan.FromMilliseconds(300),
         connectClients: true
         );
@@ -49,13 +49,13 @@ namespace NetMessage.Integration.Test
     }
 
     [TestMethod]
-    public void HeartbeatReceiveTimeout()
+    public void HeartbeatReceiveTimeoutOnServer()
     {
       // heartbeat is sent too slow 
       StartAndConnect(
-        heartbeatInterval: TimeSpan.FromMilliseconds(200),
-        heartbeatTimeout: TimeSpan.FromMilliseconds(300),
-        receiveTimeout: TimeSpan.FromMilliseconds(100),
+        heartbeatIntervalServer: TimeSpan.FromMilliseconds(100),
+        heartbeatIntervalClient: TimeSpan.FromMilliseconds(500),
+        receiveTimeout: TimeSpan.FromMilliseconds(300),
         connectClients: true
         );
 
@@ -66,18 +66,25 @@ namespace NetMessage.Integration.Test
         _sessionClosedWaitTokens[clientIndex].WaitAndAssert($"SessionClosed was not triggered on session {clientIndex}");
         Assert.AreEqual(ECloseReason.ConnectionLost, _lastSessionClosedArgs?.Reason, $"SessionClosed was triggered with unexpected reason");
       }
+    }
 
-      Thread.Sleep(1000);
+    [TestMethod]
+    public void HeartbeatReceiveTimeoutOnClient()
+    {
+      // heartbeat is sent too slow 
+      StartAndConnect(
+        heartbeatIntervalServer: TimeSpan.FromMilliseconds(500),
+        heartbeatIntervalClient: TimeSpan.FromMilliseconds(100),
+        receiveTimeout: TimeSpan.FromMilliseconds(300),
+        connectClients: true
+        );
 
-      // client does not detect a connection loss because it can still send the heartbeat
-      // session then closes the connection which is detected by client
+      // session receive timeout should be triggered
       for (int clientIndex = 0; clientIndex < ClientCount; clientIndex++)
       {
-        _connectionLostClientErrorWaitTokens[clientIndex].AssertNotSet($"ConnectionLost Error was triggered on client {clientIndex}");
+        _connectionLostClientErrorWaitTokens[clientIndex].WaitAndAssert($"ConnectionLost Error was not triggered on client {clientIndex}");
         _clientDisconnectedWaitTokens[clientIndex].WaitAndAssert($"Disconnected was not triggered on client {clientIndex}");
-        Assert.AreEqual(ECloseReason.SocketException, _lastClientDisconnectedArgs?.Reason, $"Disconnected was triggered with unexpected reason");
-        Assert.IsFalse(_clients[clientIndex].IsConnected, $"client {clientIndex} is still connected");
-        Assert.IsFalse(_sessions[clientIndex].IsConnected, $"session {clientIndex} is still connected");
+        Assert.AreEqual(ECloseReason.ConnectionLost, _lastClientDisconnectedArgs?.Reason, $"SessionClosed was triggered with unexpected reason");
       }
     }
 
@@ -86,8 +93,8 @@ namespace NetMessage.Integration.Test
     {
       // heartbeat is disabled
       StartAndConnect(
-        heartbeatInterval: Timeout.InfiniteTimeSpan,
-        heartbeatTimeout: TimeSpan.FromMilliseconds(100),
+        heartbeatIntervalServer: Timeout.InfiniteTimeSpan,
+        heartbeatIntervalClient: Timeout.InfiniteTimeSpan,
         receiveTimeout: Timeout.InfiniteTimeSpan,
         connectClients: true
         );
@@ -108,8 +115,8 @@ namespace NetMessage.Integration.Test
     {
       // heartbeat is sent too slow 
       StartAndConnect(
-        heartbeatInterval: TimeSpan.FromMilliseconds(1000),
-        heartbeatTimeout: TimeSpan.FromMilliseconds(100),
+        heartbeatIntervalServer: TimeSpan.FromMilliseconds(1000),
+        heartbeatIntervalClient: TimeSpan.FromMilliseconds(1000),
         receiveTimeout: TimeSpan.FromMilliseconds(100),
         connectClients: false
         );
@@ -125,15 +132,16 @@ namespace NetMessage.Integration.Test
       }
     }
 
-    private void StartAndConnect(TimeSpan heartbeatInterval, TimeSpan heartbeatTimeout, TimeSpan receiveTimeout, bool connectClients)
+    private void StartAndConnect(TimeSpan heartbeatIntervalServer, TimeSpan heartbeatIntervalClient, TimeSpan receiveTimeout, bool connectClients)
     {
-      _server!.ReceiveTimeout = receiveTimeout;
+      _server!.HeartbeatInterval = heartbeatIntervalServer;
+      _server.ReceiveTimeout = receiveTimeout;
       _server.Start();
 
       for (int i = 0; i < ClientCount; i++)
       {
-        _clients[i].HeartbeatInterval = heartbeatInterval;
-        _clients[i].HeartbeatTimeout = heartbeatTimeout;
+        _clients[i].HeartbeatInterval = heartbeatIntervalClient;
+        _clients[i].ReceiveTimeout = receiveTimeout;
         _connectionLostClientErrorWaitTokens[i] = new WaitToken(1);
         _connectionLostSessionErrorWaitTokens[i] = new WaitToken(1);
         _clientDisconnectedWaitTokens[i] = new WaitToken(1);

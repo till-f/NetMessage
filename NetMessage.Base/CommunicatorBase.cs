@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
 
 namespace NetMessage.Base
 {
@@ -11,6 +12,8 @@ namespace NetMessage.Base
     where TRequest : Request<TRequest, TProtocol, TData>
     where TProtocol : class, IProtocol<TData>
   {
+    private readonly System.Timers.Timer _heartbeatTimer = new System.Timers.Timer();
+
     private readonly ConcurrentDictionary<int, ResponseEvent<TData>> _responseEvents = new ConcurrentDictionary<int, ResponseEvent<TData>>();
     private readonly ManualResetEvent _disconnectionFinishedEvent = new ManualResetEvent(true);
 
@@ -19,12 +22,17 @@ namespace NetMessage.Base
     private int _responseIdCounter;
 
     /// <summary>
-    /// Specifies the time to wait for a client packet before assuming connection loss.
-    /// A value smaller or equal zero disables the receive timeout. Clients should not use a receive timeout
-    /// because the server will not send heartbeats. Instead, they can detect a connection loss when sending
-    /// the heartbeat failed.
+    /// Specifies the interval between when heartbeat packets are sent.
+    /// A value smaller or equal zero disables the heartbeat. In that case, the TCP's native keep alive mechanism is used.
+    /// Note that a connection loss might not be detected quickly then.
     /// </summary>
-    public TimeSpan ReceiveTimeout { get; set; } = Timeout.InfiniteTimeSpan;
+    public TimeSpan HeartbeatInterval { get; set; } = Defaults.HeartbeatInterval;
+
+    /// <summary>
+    /// Specifies the time to wait for a client packet before assuming connection loss.
+    /// A value smaller or equal zero disables the receive timeout.
+    /// </summary>
+    public TimeSpan ReceiveTimeout { get; set; } = Defaults.ReceiveTimeout;
 
     /// <summary>
     /// The time to wait for the response after sending a request before a TimeoutException is thrown.
@@ -119,6 +127,7 @@ namespace NetMessage.Base
         _isClosing = true;
       }
 
+      _heartbeatTimer.Stop();
       _cancellationTokenSource.Cancel();
       RemoteSocket?.Close();
       RemoteSocket?.Dispose();
@@ -127,6 +136,11 @@ namespace NetMessage.Base
       NotifyClosed(closeArgs);
 
       return false;
+    }
+
+    public void Dispose()
+    {
+      Close(new SessionClosedArgs(ECloseReason.ObjectDisposed));
     }
 
     /// <summary>
@@ -178,7 +192,7 @@ namespace NetMessage.Base
       }
       catch (Exception ex)
       {
-        NotifyError($"{ex.GetType().Name} while converting to raw format", ex);
+        NotifyError($"Unexpected {ex.GetType().Name} while converting to raw format", ex);
         throw;
       }
 
@@ -228,6 +242,8 @@ namespace NetMessage.Base
     /// </summary>
     protected void StartReceiveAsync()
     {
+      StartHeartbeatTimerIfEnabled();
+
       var receiveTask = Task.Run(() =>
       {
         while (!CancellationToken.IsCancellationRequested)
@@ -241,7 +257,7 @@ namespace NetMessage.Base
 
             if (!completedInTime)
             {
-              throw new ConnectionLostException($"No heartbeat was received after {receiveTimeoutInms} ms");
+              throw new ConnectionLostException(receiveTimeoutInms);
             }
 
             if (!singleReceiveTask.IsCompleted || singleReceiveTask.IsFaulted)
@@ -290,7 +306,7 @@ namespace NetMessage.Base
           }
           catch (Exception ex)
           {
-            if (HandleReceiveOrHeartbeatException(ex)) return;
+            if (HandleReceiveOrHeartbeatException(ex, true)) return;
           }
         }
       }, CancellationToken);
@@ -312,7 +328,7 @@ namespace NetMessage.Base
     /// Handler for exceptions in the async receive tasks.
     /// Returns true to indicate that the receive should be aborted.
     /// </summary>
-    protected bool HandleReceiveOrHeartbeatException(Exception ex)
+    private bool HandleReceiveOrHeartbeatException(Exception ex, bool isReceiveContext)
     {
       // CancellationToken was triggered. This is not an error (do not notify about it)
       if (ex is OperationCanceledException)
@@ -323,8 +339,11 @@ namespace NetMessage.Base
       // Connection was lost (receive timed out because no heartbeat was received)
       if (ex is ConnectionLostException cle)
       {
-        Close(new SessionClosedArgs(ECloseReason.ConnectionLost));
-        NotifyError($"Connection lost: {cle.Message}", cle);
+        if (isReceiveContext)
+        {
+          Close(new SessionClosedArgs(ECloseReason.ConnectionLost));
+          NotifyError($"Connection lost", cle);
+        }
         return true;
       }
 
@@ -332,19 +351,54 @@ namespace NetMessage.Base
       // FUTURE: depending on kind of error, try automatic reconnect / restoring the connection
       if (ex.InnerException is SocketException se)
       {
-        Close(new SessionClosedArgs(ECloseReason.SocketException, se));
-        NotifyError($"Unexpected socket error in receive task: {se.SocketErrorCode}", se);
+        if (isReceiveContext)
+        {
+          Close(new SessionClosedArgs(ECloseReason.SocketException, se));
+          NotifyError($"Unexpected socket error in receive task: {se.SocketErrorCode}", se);
+        }
         return true;
       }
 
-      // Another exception occurred. In this case, the connection should still be usable.
-      NotifyError($"Unexpected {ex.GetType().Name} in receive task: {ex.Message}", ex);
+      if (isReceiveContext)
+      {
+        // Another exception occurred. In this case, the connection should still be usable.
+        NotifyError($"Unexpected {ex.GetType().Name} in receive task", ex);
+      }
       return false;
     }
 
-    public void Dispose()
+    private void StartHeartbeatTimerIfEnabled()
     {
-      Close(new SessionClosedArgs(ECloseReason.ObjectDisposed));
+      if (HeartbeatInterval.IsInfinite())
+      {
+        _heartbeatTimer.Stop();
+        return;
+      }
+
+      _heartbeatTimer.AutoReset = false;
+      _heartbeatTimer.Interval = HeartbeatInterval.TotalMilliseconds;
+      _heartbeatTimer.Elapsed -= OnHeartbeatTimerElapsed;
+      _heartbeatTimer.Elapsed += OnHeartbeatTimerElapsed;
+      _heartbeatTimer.Start();
+    }
+
+    private void OnHeartbeatTimerElapsed(object sender, ElapsedEventArgs e)
+    {
+      try
+      {
+        if (CancellationToken.IsCancellationRequested)
+        {
+          return;
+        }
+
+        SendRawDataAsync(ProtocolBuffer!.HeartbeatPacket);
+      }
+      catch (Exception ex)
+      {
+        if (HandleReceiveOrHeartbeatException(ex, false)) return;
+      }
+
+      _heartbeatTimer.Start();
     }
   }
 }

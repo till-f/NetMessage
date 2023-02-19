@@ -33,14 +33,17 @@ namespace NetMessage.Base
     }
 
     /// <summary>
-    /// Specifies the receive timeout for all sessions, see <see cref="CommunicatorBase{TRequest,TProtocol,TData}.ReceiveTimeout"/>.
-    /// A value smaller or equal zero disables the receive timeout. In that case, the client heartbeat should be disabled, too,
-    /// so that TCP's native keep alive mechanism is used. Note that a connection loss might not be detected quickly then.
+    /// Specifies the HeartbeatInterval for all sessions, see <see cref="CommunicatorBase{TRequest,TProtocol,TData}.HeartbeatInterval"/>.
+    /// </summary>
+    public TimeSpan HeartbeatInterval { get; set; } = Defaults.HeartbeatInterval;
+
+    /// <summary>
+    /// Specifies the ReceiveTimeout for all sessions, see <see cref="CommunicatorBase{TRequest,TProtocol,TData}.ReceiveTimeout"/>.
     /// </summary>
     public TimeSpan ReceiveTimeout { get; set; } = Defaults.ReceiveTimeout;
 
     /// <summary>
-    /// Only applicable if receive timeout is disabled.
+    /// Only applicable if heartbeat is disabled.
     /// Specifies the timeout with no activity until the first keep-alive packet is sent. A value smaller or equal zero turns off keep alive.
     /// </summary>
     public TimeSpan KeepAliveTime { get; set; } = Defaults.KeepAliveTime;

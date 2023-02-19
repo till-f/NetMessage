@@ -9,6 +9,8 @@
 provide typesafe communication for any kind of .NET application. All message types are defined by plain C# classes. No
 configuration files, no external tools and no additional dependencies.
 
+*NetMessage* can be an alternative to [gRPC](https://grpc.io/), if endpoints are implemented in .NET.
+
 
 ## Quickstart
 
@@ -16,8 +18,8 @@ configuration files, no external tools and no additional dependencies.
 Get *NetMessage* from [NuGet](https://www.nuget.org/packages/NetMessage/ "NetMessage on NuGet.org").
 
 
-### 2. Define Data Types
-Create the message, request and response types, for example:
+### 2. Define packet types
+Define classes of possible packets in your application protocol, for example:
 
 ```cs
 public class WeatherRequest : IRequest<WeatherResponse>
@@ -32,13 +34,17 @@ public class WeatherResponse
 } 
 ```
 
-This models the application layer of your protocol. Note that in this example, `WeatherRequest` is tied to the
-response type `WeatherResponse`. This contract will be enforced by the compiler. When an endpoint receives a
-`WeatherRequest` it can only reply with an instance of `WeatherResponse`. Besides request and response packets,
-endpoints can also send simple messages. See [Working Principle](#working-principle) for more details.
+Note that not only the packet types are defined here, but also a communication contract between client and server, which is
+enforced by the compiler: in this example, `WeatherRequest` is tied to the response type `WeatherResponse`. When an endpoint
+receives a `WeatherRequest` packet, it must reply with an instance of `WeatherResponse`. On the caller side, no typecast
+is needed to consume the response of the specifc type.
 
-*Remark: All instances are (de)serialized by the selected `IDataSerializer`. By default, the `XmlSerializer` from
-.NET is used.*
+Besides request and response packets, endpoints can also send simple messages. See [Working Principle](#working-principle)
+for more details.
+
+All instances are (de)serialized by the selected `IDataSerializer`. By default, the `XmlSerializer` from .NET is used, which
+imposes some [restrictions](https://learn.microsoft.com/en-us/dotnet/standard/serialization/introducing-xml-serialization#items-that-can-be-serialized).
+
 
 ### 3. Initialize and start server
 Create a server instance, which will listens on the specified port, and add handlers for relevant events, messages
@@ -101,7 +107,7 @@ Check out the *TypeSafe* example in the [Examples](https://github.com/till-f/Net
 It is a small console application that can send a few pre-defined messages on a key press from the client to the
 server app and vice versa. Or just inspect the relevant files from here:
 
-* [Messages](Examples/TypeSafe/Messages.cs)
+* [Packets](Examples/TypeSafe/Packets.cs)
 * [ClientApp](Examples/TypeSafe.Client/NetMessageClientApp.cs)
 * [ServerApp](Examples/TypeSafe.Server/NetMessageServerApp.cs)
 
@@ -122,20 +128,19 @@ Every error or exception in the communication layer triggers the `OnError` event
 was closed due to the error, the respective `Disconnected` or `SessionClosed` event was triggered first.
 
 
-## Heartbeats and KeepAlive
-By default, clients will send heartbeat signals to the server. If the server does not receive a heartbeat signal for a
-certain time (`ReceiveTimeout`), it will assume that the connection was lost and closes the session with a `ConnectionLost`
-reason. If a client fails to send a heartbeat signal for a certain amount of time (`HeartbeatTimeout`), it will as well
-close the connection with the same reason. The default timing values can be found [here](NetMessage.Base/Defaults.cs) (among others).
+## Heartbeats and Keepalive
+By default, heartbeat signals are send by both endpoints in certain intervals (`HeartbeatInterval`). If one endpoint does not
+receive a packet or heartbeat signal for a certain time (`ReceiveTimeout`), it will assume that the connection was lost and closes
+the session with a `ConnectionLost` reason. The default timing values can be found [here](NetMessage.Base/Defaults.cs) (among others).
 
-If heartbeat signals are sent, the TCP "keep alive" mechanism provided by the operating system is not used. When `HeartbeatInterval`
-is <= 0, the client instructs the OS to send a first keep alive message after a time span of `KeepAliveTime` using `KeepAliveInterval`
-for retries. The number of retries depends on the OS settings (it is a fixed value of 10 for recent versions of Microsoft Windows).
-The same applies for the server, if `ReceiveTimeout` is <= 0.
+If heartbeat signals are sent, the TCP "keep alive" mechanism provided by the operating system is turned off. If heartbeats are
+disabled, that is when `HeartbeatInterval` is <= 0, the client instructs the OS to send a first keep alive message after a time span
+of `KeepAliveTime` using `KeepAliveInterval` for retries. The number of retries depends on the OS settings (it is a fixed value of
+10 for recent versions of Microsoft Windows).
 
 
 ## Working Principle
-Three basic message kinds can be distinguished:
+Three basic packet kinds can be distinguished:
 
 * **Message**: an arbitrary message
 * **Request**: a message that expects a response of a specific type
@@ -168,20 +173,18 @@ the original user request object of type `TTData`:
     it is not possible to add an explicit handler.
 
 
-## Extension
-If you want to implement a custom protocol, but still taking advantage of the event based notifications for messages, requests
-and responses provided by *NetMessage*, you might want to use the *NetMessage.Base* [NuGet package](https://www.nuget.org/packages/NetMessage.Base "NetMessage.Base on NuGet.org").
-The basic working principle described above is still valid, but the higher layer for transparent (de)serialization
-of C# objects will not be available.
-
-Using a custom protocol is as simple as implementing the `IProtocol` interface ([IProtocol.cs](NetMessage.Base/IProtocol.cs))
-and adding the corresponding concrete classes for the server, client and session. See the *SimpleString* Example in the
-[Examples](https://github.com/till-f/NetMessage/tree/main/Examples) folder for details.
-
+## Customization
 If you just want to change the way how C# objects are (de)serialized, e.g. if you want to use Json instead of XML, all you have to do
 is implementing the `IDataSerializer` interface ([IDataSerializer.cs](NetMessage/IDataSerializer.cs)) and pass the
 corresponding instance to the `NetMessageServer` and `NetMessageClient` constructor respectively. Take a look at the existing
 implementation for XML in [XmlDataSerializer.cs](NetMessage/XmlDataSerializer.cs) if you need an example.
+
+If you really want to support a custom low-level protocol, you can still take advantage of the event based notifications for packets
+but the higher layer for transparent (de)serialization of C# objects is not available. If this is OK, you can use the *NetMessage.Base*
+[NuGet package](https://www.nuget.org/packages/NetMessage.Base "NetMessage.Base on NuGet.org") directly. You only have to implement
+the `IProtocol` interface (see [IProtocol.cs](NetMessage.Base/IProtocol.cs)) and must add the corresponding concrete classes for the
+server, client, session and request objects. See the *SimpleString* Example under [Examples](https://github.com/till-f/NetMessage/tree/main/Examples)
+for details.
 
 
 ## Tests
@@ -189,8 +192,10 @@ There is small but strong collection of integration tests, see [here](https://gi
 
 
 ## Roadmap
-
-* Auto reconnect (clients can automatically reconnects to the server after a connection loss, if desired)
-* TLS encryption
+* Auto reconnect feature (if desired, client automatically reconnects to the server after a connection loss)
 * Performance measurements
-* More test cases
+
+
+## Wishlist
+* TLS encryption
+* Notification when receiving message/request without corresponding handler
