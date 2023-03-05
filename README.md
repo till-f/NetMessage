@@ -19,7 +19,7 @@ Get *NetMessage* from [NuGet](https://www.nuget.org/packages/NetMessage/ "NetMes
 
 
 ### 2. Define packet types
-Define classes for your packets, for example:
+Define classes for your packets, e.g.:
 
 ```cs
 public class WeatherRequest : IRequest<WeatherResponse>
@@ -34,9 +34,9 @@ public class WeatherResponse
 } 
 ```
 
-Note that not only the packet types are defined here, but also a communication contract between client and server, which is
+Note that not only the packet types are defined by this, but also a communication contract between client and server, which is
 enforced by the compiler: in this example, `WeatherRequest` is tied to the response type `WeatherResponse`. When an endpoint
-receives a `WeatherRequest` packet, it must reply with an instance of `WeatherResponse`. On the caller side, no typecast
+receives a `WeatherRequest` packet, it *must* reply with an instance of `WeatherResponse`. On the caller side, no typecast
 is needed to consume the response of the specifc type.
 
 Besides request and response packets, endpoints can also send simple messages. See [Working Principle](#working-principle)
@@ -47,7 +47,7 @@ imposes some [restrictions](https://learn.microsoft.com/en-us/dotnet/standard/se
 
 
 ### 3. Initialize and start server
-Create a server instance, which will listens on the specified port, and add handlers for relevant events, messages
+Create a server instance, which will listen on the specified port, and add handlers for relevant events, messages
 and requests. Then, start the server:
 
 ```cs
@@ -97,7 +97,10 @@ client.ConnectAsync("127.0.0.1", 1234);
 When the connection has been established, you are ready to send messages or requests:
 
 ```cs
+// following line sends a simple string message
 client.SendMessageAsync("Hello World!");
+
+// following line sends a request and waits for the corresponding response
 var response = await client.SendRequestAsync(new WeatherRequest { City = "Bonn" });
 Console.WriteLine($"RESPONSE: {response.Forecast}");
 ```
@@ -105,7 +108,7 @@ Console.WriteLine($"RESPONSE: {response.Forecast}");
 ## Example
 Check out the *TypeSafe* example in the [Examples](https://github.com/till-f/NetMessage/tree/main/Examples) folder.
 It is a small console application that can send a few pre-defined messages on a key press from the client to the
-server app and vice versa. Or just inspect the relevant files from here:
+server and vice versa. Or just inspect the relevant files from here:
 
 * [Packets](Examples/TypeSafe/Packets.cs)
 * [ClientApp](Examples/TypeSafe.Client/NetMessageClientApp.cs)
@@ -125,7 +128,7 @@ for disconnection, details are provided in the `SessionClosedArgs`. Possible rea
 
 ## Error Handling
 Every error or exception in the communication layer triggers the `OnError` event of the server or client. If the connection
-was closed due to the error, the respective `Disconnected` or `SessionClosed` event was triggered first.
+is closed due to an error, the respective `Disconnected` or `SessionClosed` event is triggered first.
 
 
 ## Heartbeats and Keepalive
@@ -136,9 +139,9 @@ the session with a `ConnectionLost` reason. The default timing values can be fou
 If heartbeats are disabled, the TCP "keep alive" mechanism provided by the operating system is used. To disable heartbeats, set
 `HeartbeatInterval` to a value smaller or equal to zero. In that case, the OS should send the first keep alive message when no data
 was transmitted for `KeepAliveTime` and should then retry after `KeepAliveInterval` if no acknowledgement was received. The number of
-retries depends on the OS settings (it should be a fixed value of 10 for recent versions of Microsoft Windows). However, it seems that
-the keep alive timing values are not properly considered in all cases and it may take *much* longer before a connection loss is detected.
-If the detection of a connection loss is important, it is highly recommended to use heartbeats instead of keep alive.
+retries depends on the OS settings (it should be a fixed value of 10 for recent versions of Microsoft Windows). However, the keep alive
+timing values are not properly considered in all cases and it may take *much* longer before a connection loss is detected. If the
+detection of a connection loss is important, it is highly recommended to use heartbeats instead of keep alive.
 
 
 ## Working Principle
@@ -176,16 +179,16 @@ the original user request object of type `TTData`:
 
 
 ## Customization
-If you just want to change the way how C# objects are (de)serialized, e.g. if you want to use Json instead of XML, all you have to do
-is implementing the `IDataSerializer` interface ([IDataSerializer.cs](NetMessage/IDataSerializer.cs)) and pass the
-corresponding instance to the `NetMessageServer` and `NetMessageClient` constructor respectively. Take a look at the existing
-implementation for XML in [XmlDataSerializer.cs](NetMessage/XmlDataSerializer.cs) if you need an example.
+If you just want to change the way how C# objects are (de)serialized, e.g., if you want to use Json instead of XML, all you have to do
+is implementing the `IDataSerializer` interface ([IDataSerializer.cs](NetMessage/IDataSerializer.cs)) and pass the corresponding instance
+to the `NetMessageServer` and `NetMessageClient` constructor respectively. Take a look at the existing implementation for XML in
+[XmlDataSerializer.cs](NetMessage/XmlDataSerializer.cs) if you need an example.
 
-If you really want to support a custom low-level protocol, you can still take advantage of the event based notifications for packets
+If you want to implement a truly custom protocol, you can still take advantage of the event based notifications provided by *NetMessage*,
 but the higher layer for transparent (de)serialization of C# objects is not available. If this is OK, you can use the *NetMessage.Base*
-[NuGet package](https://www.nuget.org/packages/NetMessage.Base "NetMessage.Base on NuGet.org") directly. You only have to implement
-the `IProtocol` interface (see [IProtocol.cs](NetMessage.Base/IProtocol.cs)) and must add the corresponding concrete classes for the
-server, client, session and request objects. See the *SimpleString* Example under [Examples](https://github.com/till-f/NetMessage/tree/main/Examples)
+[NuGet package](https://www.nuget.org/packages/NetMessage.Base "NetMessage.Base on NuGet.org") directly. You have to implement the `IProtocol`
+interface (see [IProtocol.cs](NetMessage.Base/IProtocol.cs)) and must add the corresponding concrete classes for the server, client, session
+and request objects. See the *SimpleString* Example under [Examples](https://github.com/till-f/NetMessage/tree/main/Examples)
 for details.
 
 
@@ -195,9 +198,6 @@ There is small but strong collection of integration tests, see [here](https://gi
 
 ## Roadmap
 * Auto reconnect feature (if desired, client automatically reconnects to the server after a connection loss)
-* Performance measurements
-
-
-## Wishlist
-* TLS encryption
 * Notification when receiving message/request without corresponding handler
+* Performance measurements
+* TLS encryption
