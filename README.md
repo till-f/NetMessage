@@ -19,7 +19,7 @@ Get *NetMessage* from [NuGet](https://www.nuget.org/packages/NetMessage/ "NetMes
 
 
 ### 2. Define packet types
-Define classes of possible packets in your application protocol, for example:
+Define classes for your packets, for example:
 
 ```cs
 public class WeatherRequest : IRequest<WeatherResponse>
