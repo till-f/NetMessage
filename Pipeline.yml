@@ -4,7 +4,7 @@ variables:
   ${{ else }}:
     versionKind: 'pre'
 
-name: 1.0.0-$(versionKind)$(Rev:rrr)
+name: 1.1.0-$(versionKind)$(Rev:rrr)
 
 trigger:
 - main
